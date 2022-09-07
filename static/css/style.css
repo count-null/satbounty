@@ -3,7 +3,6 @@
 }
 
 .field-error-msg {
-  color: #ff0000;
   display: block;
   margin: -10px 0 10px 0;
 }
@@ -13,7 +12,6 @@
 }
 
 .field-success-msg {
-  color: #5AB953;
   display: block;
   margin: -10px 0 10px 0;
 }
@@ -29,7 +27,6 @@ form.inline {
 form.link,
 button.link {
   display: inline;
-  color: #1EAEDB;
   border: none;
   outline: none;
   background: none;
@@ -43,10 +40,6 @@ button.link {
   font-weight: normal;
   line-height: inherit;
   letter-spacing: inherit;
-}
-
-form.link:hover, button.link:hover {
-  color: #0FA0CE;
 }
 
 button.small {

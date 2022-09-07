@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-
-    <link href="/css/fonts.css" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href="/css/normalize.min.css">
-    <link rel="stylesheet" href="/css/skeleton.min.css">
+    <link href="/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-cpWN7UDefuTvemH3imAmP4mcNMFoajrssLj1AqAsYsljN2q/DVv+3lkFfFFDPftv">
+    <link href="/css/fonts.css" rel="stylesheet" type="text/css" integrity="sha384-+V7zwFBtqv45p4rfFrET4/WPY/QVClsBTksBSaL+r6uvN5+R3Jcl9qgKiesDT62e">
+    <link rel="stylesheet" href="/css/normalize.min.css" integrity="sha384-T4YHWV4w4NXcWFudaKGJUPUVni3hf/EtUh0We8V238hBDuUkcvYKgxMM4/BzmcE8">
+    <link rel="stylesheet" href="/css/skeleton.min.css" integrity="sha384-55QbolHN4nRdIgkcKN/C3OzTWsKISb5s84GCeOXxxkAFDS/zPoqSS6rinw1CqF1F">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/png" href="/images/favicon.ico">
 
