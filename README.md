@@ -15,7 +15,7 @@ Open source darknet market with lightning network payments and withdrawals.
 * compiler dependencies `apt install libprotobuf-dev protobuf-compiler cmake`
 
 ### Step 1. Create the configuration
-> Create a **config.toml** file and fill in the relevant sections to connect to your LND node:
+> Copy **config.example** file to **config.toml** and edit relevant sections to connect to your LND node:
 
 ```
 db_url="db.sqlite"
@@ -27,7 +27,17 @@ lnd_tls_cert_path="~/.lnd/tls.cert"
 lnd_macaroon_path="~/.lnd/data/chain/bitcoin/mainnet/admin.macaroon"
 ```
 
-### Step 2. Start squeakroad:
+### Step 2. Spin up development simnet (optional)
+> Copy **simnet_example/** directory to **simnet/** and edit the config to use Alice's node
+
+Using docker-compose, bring up the simnet. 
+
+`docker-compose up -d`
+
+The example simnet is two nodes, Alice and Bob. Alice is the market node, and Bob's node is used to pay and widthdraw to/from the market. 
+
+
+### Step 3. Start squeakroad:
 
 ```
 cargo run
