@@ -33,6 +33,6 @@ impl Config {
     pub fn get_config() -> Figment {
         Figment::from(Serialized::defaults(Config::default()))
             .merge(Toml::file("config.toml"))
-            .merge(Env::prefixed("SQUEAKROAD_"))
+            .merge(Env::prefixed("SATBOUNTY_"))
     }
 }

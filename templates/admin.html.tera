@@ -16,8 +16,6 @@ Username: {{ user.email }}.
     <br>
     <a href="/update_pgp_info">Update PGP Info</a>
     <br>
-    <a href="/update_squeaknode_info">Update Squeaknode Info</a>
-    <br>
     <a href="/update_fee_rate">Update Fee Rate</a>
     <br>
     <a href="/update_user_bond_price">Update User Bond Price</a>

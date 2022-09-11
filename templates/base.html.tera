@@ -38,7 +38,7 @@
 
     </style>
 
-    <title>{{ base_context.admin_settings.market_name }} - Squeak Road</title>
+    <title>{{ base_context.admin_settings.market_name }}</title>
 </head>
 
 <body>
@@ -86,7 +86,7 @@
            –––––––––––––––––––––––––––––––––––––––––––––––––– -->
       <div class="container">
         <footer id="footer" class="twelve columns">
-          Powered by <a href="https://github.com/yzernik/squeakroad" rel="noreferrer noopener" target="_blank">Squeak Road</a> Have questions? Join us on <a href="https://t.me/squeakroad" rel="noreferrer noopener" target="_blank">Telegram</a>
+          Powered by Sat Bounty
         </footer>
       </div> <!-- end footer div.container -->
     </div>  <!-- end footer div.table-block -->

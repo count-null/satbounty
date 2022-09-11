@@ -349,21 +349,9 @@
           "name": "pgp_key",
           "ordinal": 2,
           "type_info": "Text"
-        },
-        {
-          "name": "squeaknode_pubkey",
-          "ordinal": 3,
-          "type_info": "Text"
-        },
-        {
-          "name": "squeaknode_address",
-          "ordinal": 4,
-          "type_info": "Text"
         }
       ],
       "nullable": [
-        false,
-        false,
         false,
         false,
         false
@@ -952,26 +940,6 @@
     },
     "query": "\nDELETE from listingimages\nWHERE\n listing_id = ?\n;"
   },
-  "45226115173a788e8b8f3b10b66cffbe7aecd354888cec848e7eed7911097245": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 7
-      }
-    },
-    "query": "\nINSERT INTO\n adminsettings (market_name, fee_rate_basis_points, user_bond_price_sat, pgp_key, squeaknode_pubkey, squeaknode_address, max_allowed_users)\nSELECT ?, ?, ?, ?, ?, ?, ?\nWHERE NOT EXISTS(SELECT 1 FROM adminsettings)\n;"
-  },
-  "4ab31501b30a8192da13b2379e956b154e446ba526dec5a50252d9cd493d5e73": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 2
-      }
-    },
-    "query": "UPDATE usersettings SET squeaknode_address = ? WHERE user_id = ?;"
-  },
   "506a715d6ca6157c9b48f0892946fd827423ba20b679c814ea5b8a3824f28f49": {
     "describe": {
       "columns": [
@@ -1264,6 +1232,16 @@
     },
     "query": "\nselect\n orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.listing_id as order_listing_id, orders.shipping_option_id, orders.shipping_instructions, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.shipped, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, listings.id, listings.public_id as listing_public_id, listings.user_id as listing_user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms as listing_created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n orders\nLEFT JOIN\n listings\nON\n orders.listing_id = listings.id\nLEFT JOIN\n listingimages\nON\n listings.id = listingimages.listing_id\nAND\n listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)\nLEFT JOIN\n users\nON\n listings.user_id = users.id\nWHERE\n orders.paid\nAND\n order_buyer_user_id = ?\nGROUP BY\n orders.id\nORDER BY orders.payment_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
   },
+  "5a7b3431b2f062cf357acb7546eb00b0519388b45cbcf3e22f44877984a5f73a": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 5
+      }
+    },
+    "query": "\nINSERT INTO\n adminsettings (market_name, fee_rate_basis_points, user_bond_price_sat, pgp_key, max_allowed_users)\nSELECT ?, ?, ?, ?, ?\nWHERE NOT EXISTS(SELECT 1 FROM adminsettings)\n;"
+  },
   "61d7798feebbf92262ef0e56c24e865dca6f028a4728caa912302493d22da96c": {
     "describe": {
       "columns": [
@@ -1416,16 +1394,6 @@
     },
     "query": "\nUPDATE\n orders\nSET\n canceled_by_buyer = true, shipping_instructions = ''\nWHERE\n id = ?\nAND\n not (shipped OR canceled_by_seller OR canceled_by_buyer)\n;"
   },
-  "714c4e0de57ccd557bb960add3db93f42a742411c949565b11a8a2da25ec78bb": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 5
-      }
-    },
-    "query": "\nINSERT INTO\n usersettings (user_id, pgp_key, squeaknode_pubkey, squeaknode_address)\nSELECT ?, ?, ?, ?\nWHERE NOT EXISTS(SELECT 1 FROM usersettings WHERE user_id = ?)\n;"
-  },
   "7167813bfa8f2699a158c45c3605558b398d5bcc779ab036e5b5796f89a4f262": {
     "describe": {
       "columns": [
@@ -1473,16 +1441,6 @@
       }
     },
     "query": "select * from shippingoptions WHERE listing_id = ? ORDER BY shippingoptions.price_sat ASC;"
-  },
-  "73fa36252a280743ca2086265d075ec70720f624594f05f6df36076de7e1659a": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "UPDATE adminsettings SET squeaknode_pubkey = ?"
   },
   "752ff6323848d9151136709a7149dbbfa9bfd97746827c9a8c59be4fb69b281e": {
     "describe": {
@@ -3795,24 +3753,12 @@
           "type_info": "Text"
         },
         {
-          "name": "squeaknode_address",
-          "ordinal": 5,
-          "type_info": "Text"
-        },
-        {
-          "name": "squeaknode_pubkey",
-          "ordinal": 6,
-          "type_info": "Text"
-        },
-        {
           "name": "max_allowed_users",
-          "ordinal": 7,
+          "ordinal": 5,
           "type_info": "Int64"
         }
       ],
       "nullable": [
-        false,
-        false,
         false,
         false,
         false,
@@ -4090,6 +4036,16 @@
     },
     "query": "\nDELETE FROM users\nWHERE id = ?\n;"
   },
+  "e01f1bf0c07db053943fcf37b07b79318347e157549d4b005752d356f09bc8fc": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 3
+      }
+    },
+    "query": "\nINSERT INTO\n usersettings (user_id, pgp_key)\nSELECT ?, ?\nWHERE NOT EXISTS(SELECT 1 FROM usersettings WHERE user_id = ?)\n;"
+  },
   "e56222b06ef12cb38eca1b6467de6b1cb2cb64921f1c534c15aecf8b680c4b61": {
     "describe": {
       "columns": [],
@@ -4152,16 +4108,6 @@
     },
     "query": "select * from listingimages WHERE listing_id = ? ORDER BY listingimages.is_primary DESC;"
   },
-  "ec7a16d69715d3fd5f8592a7ab30dd8495688812799aa20c6c183944ced3ad7b": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 2
-      }
-    },
-    "query": "UPDATE usersettings SET squeaknode_pubkey = ? WHERE user_id = ?;"
-  },
   "ed5a85251b933b1a71338d447e32bb5e275d767f7eb1894f5c31beef84a16505": {
     "describe": {
       "columns": [
@@ -4213,16 +4159,6 @@
       }
     },
     "query": "\nUPDATE\n orders\nSET\n canceled_by_seller = true, shipping_instructions = ''\nWHERE\n id = ?\nAND\n not (shipped OR canceled_by_seller OR canceled_by_buyer)\n;"
-  },
-  "f2ca895de0a8649cbefd794eec10db72568c412c791c79e09901ec85c56bdba6": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "UPDATE adminsettings SET squeaknode_address = ?"
   },
   "f3c7d0e13ccbd741995710b1f499ac389e10eedaa31fdcba90c411a9f2472323": {
     "describe": {

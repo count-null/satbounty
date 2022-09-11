@@ -1,9 +1,6 @@
-# squeakroad
+# satbounty
 
-[![GitHub release](https://img.shields.io/github/release/yzernik/squeakroad.svg)](https://github.com/yzernik/squeakroad/releases)
-[![GitHub CI workflow](https://github.com/yzernik/squeakroad/actions/workflows/ci.yaml/badge.svg)](https://github.com/yzernik/squeakroad/actions/workflows/ci.yaml)
-
-Open source darknet market with lightning network payments and withdrawals.
+Create and claim bounties paid in sats over the lightning network.
 
 ## Installation
 
@@ -37,7 +34,7 @@ Using docker-compose, bring up the simnet.
 The example simnet is two nodes, Alice and Bob. Alice is the market node, and Bob's node is used to pay and widthdraw to/from the market. 
 
 
-### Step 3. Start squeakroad:
+### Step 3. Start satbounty:
 
 ```
 cargo run
@@ -68,10 +65,6 @@ After running migrations, generate the schema for compile-time type-checking:
 `cargo sqlx prepare --database-url sqlite3://db.sqlite`
 
 Optional: create a `.env` with `DATABASE_URL=sqlite3://db.sqlite` to avoid passing `--database-url`
-
-## Telegram
-
-[Join our Telegram group!](https://t.me/squeakroad)
 
 ## License
 

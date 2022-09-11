@@ -16,7 +16,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
 	openssl \
 	libgexiv2-dev
 
-COPY --from=builder /usr/local/cargo/bin/squeakroad /usr/local/bin/squeakroad
+COPY --from=builder /usr/local/cargo/bin/satbounty /usr/local/bin/satbounty
 COPY ./static /static
 COPY ./templates /templates
 

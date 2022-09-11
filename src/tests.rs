@@ -21,7 +21,7 @@ struct UpdateMarketNameInfo {
 
 fn rocket_build(config: Config) -> Rocket<Build> {
     let figment = rocket::Config::figment().merge((
-        "databases.squeakroad",
+        "databases.satbounty",
         rocket_db_pools::Config {
             url: config.db_url,
             min_connections: None,

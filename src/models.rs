@@ -120,8 +120,6 @@ pub struct AdminSettings {
     pub fee_rate_basis_points: u32,
     pub user_bond_price_sat: u64,
     pub pgp_key: String,
-    pub squeaknode_pubkey: String,
-    pub squeaknode_address: String,
     pub max_allowed_users: u64,
 }
 
@@ -130,8 +128,6 @@ pub struct AdminSettings {
 pub struct UserSettings {
     pub id: Option<i32>,
     pub pgp_key: String,
-    pub squeaknode_pubkey: String,
-    pub squeaknode_address: String,
 }
 
 #[derive(Debug, FromForm)]
@@ -142,12 +138,6 @@ pub struct MarketNameInput {
 #[derive(Debug, FromForm)]
 pub struct PGPInfoInput {
     pub pgp_key: String,
-}
-
-#[derive(Debug, FromForm)]
-pub struct SqueaknodeInfoInput {
-    pub squeaknode_pubkey: String,
-    pub squeaknode_address: String,
 }
 
 #[derive(Debug, FromForm)]
@@ -287,12 +277,10 @@ impl Default for AdminSettings {
     fn default() -> AdminSettings {
         AdminSettings {
             id: None,
-            market_name: "Squeak Road".to_string(),
+            market_name: "Sat Bounty".to_string(),
             fee_rate_basis_points: 500,
             user_bond_price_sat: 1,
             pgp_key: "".to_string(),
-            squeaknode_pubkey: "".to_string(),
-            squeaknode_address: "".to_string(),
             max_allowed_users: 10000,
         }
     }
@@ -303,8 +291,6 @@ impl Default for UserSettings {
         UserSettings {
             id: None,
             pgp_key: "".to_string(),
-            squeaknode_pubkey: "".to_string(),
-            squeaknode_address: "".to_string(),
         }
     }
 }
@@ -1719,8 +1705,6 @@ impl AdminSettings {
                     fee_rate_basis_points: r.fee_rate_basis_points.try_into().unwrap(),
                     user_bond_price_sat: r.user_bond_price_sat.try_into().unwrap(),
                     pgp_key: r.pgp_key,
-                    squeaknode_pubkey: r.squeaknode_pubkey,
-                    squeaknode_address: r.squeaknode_address,
                     max_allowed_users: r.max_allowed_users.try_into().unwrap(),
                 })
             })
@@ -1738,16 +1722,14 @@ impl AdminSettings {
         sqlx::query!(
             "
 INSERT INTO
- adminsettings (market_name, fee_rate_basis_points, user_bond_price_sat, pgp_key, squeaknode_pubkey, squeaknode_address, max_allowed_users)
-SELECT ?, ?, ?, ?, ?, ?, ?
+ adminsettings (market_name, fee_rate_basis_points, user_bond_price_sat, pgp_key, max_allowed_users)
+SELECT ?, ?, ?, ?, ?
 WHERE NOT EXISTS(SELECT 1 FROM adminsettings)
 ;",
             admin_settings.market_name,
             admin_settings.fee_rate_basis_points,
             user_bond_price_sat_i64,
             admin_settings.pgp_key,
-            admin_settings.squeaknode_pubkey,
-            admin_settings.squeaknode_address,
             max_allowed_users_i64,
         )
         .execute(&mut **db)
@@ -1816,38 +1798,6 @@ WHERE NOT EXISTS(SELECT 1 FROM adminsettings)
         Ok(())
     }
 
-    pub async fn set_squeaknode_pubkey(
-        db: &mut Connection<Db>,
-        new_squeaknode_pubkey: &str,
-    ) -> Result<(), sqlx::Error> {
-        AdminSettings::insert_if_doesnt_exist(db).await?;
-
-        sqlx::query!(
-            "UPDATE adminsettings SET squeaknode_pubkey = ?",
-            new_squeaknode_pubkey,
-        )
-        .execute(&mut **db)
-        .await?;
-
-        Ok(())
-    }
-
-    pub async fn set_squeaknode_address(
-        db: &mut Connection<Db>,
-        new_squeaknode_address: &str,
-    ) -> Result<(), sqlx::Error> {
-        AdminSettings::insert_if_doesnt_exist(db).await?;
-
-        sqlx::query!(
-            "UPDATE adminsettings SET squeaknode_address = ?",
-            new_squeaknode_address,
-        )
-        .execute(&mut **db)
-        .await?;
-
-        Ok(())
-    }
-
     pub async fn set_max_allowed_users(
         db: &mut Connection<Db>,
         new_max_allowed_users: u64,
@@ -1879,8 +1829,6 @@ impl UserSettings {
                     maybe_r.map(|r| UserSettings {
                         id: Some(r.id.try_into().unwrap()),
                         pgp_key: r.pgp_key,
-                        squeaknode_pubkey: r.squeaknode_pubkey,
-                        squeaknode_address: r.squeaknode_address,
                     })
                 })
                 .await?;
@@ -1898,14 +1846,12 @@ impl UserSettings {
         sqlx::query!(
             "
 INSERT INTO
- usersettings (user_id, pgp_key, squeaknode_pubkey, squeaknode_address)
-SELECT ?, ?, ?, ?
+ usersettings (user_id, pgp_key)
+SELECT ?, ?
 WHERE NOT EXISTS(SELECT 1 FROM usersettings WHERE user_id = ?)
 ;",
             user_id,
             user_settings.pgp_key,
-            user_settings.squeaknode_pubkey,
-            user_settings.squeaknode_address,
             user_id,
         )
         .execute(&mut **db)
@@ -1924,42 +1870,6 @@ WHERE NOT EXISTS(SELECT 1 FROM usersettings WHERE user_id = ?)
         sqlx::query!(
             "UPDATE usersettings SET pgp_key = ? WHERE user_id = ?;",
             new_pgp_key,
-            user_id,
-        )
-        .execute(&mut **db)
-        .await?;
-
-        Ok(())
-    }
-
-    pub async fn set_squeaknode_pubkey(
-        db: &mut Connection<Db>,
-        user_id: i32,
-        new_squeaknode_pubkey: &str,
-    ) -> Result<(), sqlx::Error> {
-        UserSettings::insert_if_doesnt_exist(db, user_id).await?;
-
-        sqlx::query!(
-            "UPDATE usersettings SET squeaknode_pubkey = ? WHERE user_id = ?;",
-            new_squeaknode_pubkey,
-            user_id,
-        )
-        .execute(&mut **db)
-        .await?;
-
-        Ok(())
-    }
-
-    pub async fn set_squeaknode_address(
-        db: &mut Connection<Db>,
-        user_id: i32,
-        new_squeaknode_address: &str,
-    ) -> Result<(), sqlx::Error> {
-        UserSettings::insert_if_doesnt_exist(db, user_id).await?;
-
-        sqlx::query!(
-            "UPDATE usersettings SET squeaknode_address = ? WHERE user_id = ?;",
-            new_squeaknode_address,
             user_id,
         )
         .execute(&mut **db)

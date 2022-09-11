@@ -1,8 +1,8 @@
-[package]
-name = "squeakroad"
+[package] 
+name = "satbounty"
 version = "0.1.14"
-description = "Anonymous market with Lighting Network payments"
-authors = ["Jonathan Zernik <yzernik@gmail.com>"]
+description = "Create and claim bounties paid in lightning"
+authors = ["Count Null <null@nullcount.com>"]
 license = "MIT"
 edition = "2021"
 publish = false

@@ -32,5 +32,8 @@ scripts/redirect.html
 # Uploads in pastebin example.
 examples/pastebin/upload/*
 
+# Lightning simnet
+simnet
+
 # App config file
 config.toml

@@ -49,10 +49,8 @@ mod update_market_name;
 mod update_max_allowed_users;
 mod update_pgp_info;
 mod update_shipping_options;
-mod update_squeaknode_info;
 mod update_user_bond_price;
 mod update_user_pgp_info;
-mod update_user_squeaknode_info;
 mod user;
 mod user_account;
 mod user_account_expiry;
@@ -68,7 +66,7 @@ fn rocket() -> _ {
     println!("Starting with config: {:?}", config);
 
     let figment = rocket::Config::figment().merge((
-        "databases.squeakroad",
+        "databases.satbounty",
         rocket_db_pools::Config {
             url: config.clone().db_url,
             min_connections: None,
