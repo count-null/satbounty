@@ -24,17 +24,7 @@ lnd_tls_cert_path="~/.lnd/tls.cert"
 lnd_macaroon_path="~/.lnd/data/chain/bitcoin/mainnet/admin.macaroon"
 ```
 
-### Step 2. Spin up development simnet (optional)
-> Copy **simnet_example/** directory to **simnet/** and edit the config to use Alice's node
-
-Using docker-compose, bring up the simnet. 
-
-`docker-compose up -d`
-
-The example simnet is two nodes, Alice and Bob. Alice is the market node, and Bob's node is used to pay and widthdraw to/from the market. 
-
-
-### Step 3. Start satbounty:
+### Step 2. Start satbounty:
 
 ```
 cargo run
