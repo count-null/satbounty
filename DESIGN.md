@@ -39,3 +39,6 @@ Fun Future Plans:
 
 - Users may register with username and LNURL-Auth
 - Use Lightning Escrow instead of custodial escrow
+
+Bounty poster generates preimage, sends hash of preimage to market, market creates hold invoice for initial bounty reward, bounty poster pays hold invoice, market sends hash to every case submission, case sumbission creates hold invoice for current reward amount, market pays hold invoice, some case is awarded by bounty creator and given the preimage, awarded case settles invoice with preimage, market settles bounty creation invoice with preimage. In this example there is a risk associated with reuse of the payment hash. Intermediate nodes on both paths may shortcut the preimage and disallow the webshop from receiving any money.
+
