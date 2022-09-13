@@ -2,7 +2,7 @@ use crate::base::BaseContext;
 use crate::config::Config;
 use crate::db::Db;
 use crate::lightning;
-use crate::models::{Listing, Order, ReviewInput, RocketAuthUser, ShippingOption};
+use crate::models::{Listing, Order, ReviewInput, RocketAuthUser};
 use crate::user_account::ActiveUser;
 use crate::util;
 use rocket::fairing::AdHoc;
@@ -24,7 +24,6 @@ struct Context {
     flash: Option<(String, String)>,
     order: Order,
     maybe_listing: Option<Listing>,
-    maybe_shipping_option: Option<ShippingOption>,
     maybe_seller_user: Option<RocketAuthUser>,
     user: Option<User>,
     admin_user: Option<AdminUser>,
@@ -53,10 +52,6 @@ impl Context {
         //     Ok(listing) => Some(listing),
         //     Err(_) => None
         // };
-        let maybe_shipping_option = ShippingOption::single(&mut db, order.shipping_option_id)
-            .await
-            .ok();
-        // .map_err(|_| "failed to get shipping option.")?;
         let maybe_seller_user = RocketAuthUser::single(&mut db, order.seller_user_id)
             .await
             .ok();
@@ -70,7 +65,6 @@ impl Context {
             flash,
             order,
             maybe_listing,
-            maybe_shipping_option,
             maybe_seller_user,
             user,
             admin_user,
@@ -98,29 +92,29 @@ async fn get_lightning_node_pubkey(config: &Config) -> Result<String, String> {
     Ok(get_info_resp.identity_pubkey)
 }
 
-#[put("/<id>/ship")]
-async fn ship(
+#[put("/<id>/award")]
+async fn award(
     id: &str,
     mut db: Connection<Db>,
     active_user: ActiveUser,
     admin_user: Option<AdminUser>,
 ) -> Result<Flash<Redirect>, Flash<Redirect>> {
-    match mark_order_as_shipped(id, &mut db, active_user.user.clone(), admin_user.clone()).await {
+    match mark_case_as_awarded(id, &mut db, active_user.user.clone(), admin_user.clone()).await {
         Ok(_) => Ok(Flash::success(
             Redirect::to(format!("/{}/{}", "order", id)),
-            "Order marked as shipped.",
+            "Case has been awarded.",
         )),
         Err(e) => {
             error_!("DB update({}) error: {}", id, e);
             Err(Flash::error(
                 Redirect::to(format!("/{}/{}", "order", id)),
-                "Failed to mark order as shipped.",
+                "Failed to mark case as awarded.",
             ))
         }
     }
 }
 
-async fn mark_order_as_shipped(
+async fn mark_case_as_awarded(
     order_id: &str,
     db: &mut Connection<Db>,
     user: User,
@@ -133,16 +127,16 @@ async fn mark_order_as_shipped(
     if order.seller_user_id != user.id() {
         return Err("User is not the order seller.".to_string());
     };
-    if order.shipped {
-        return Err("order is already shipped.".to_string());
+    if order.awarded {
+        return Err("case has already been rewarded.".to_string());
     };
     if order.canceled_by_seller || order.canceled_by_buyer {
-        return Err("order is already canceled.".to_string());
+        return Err("case is already widthdrawn.".to_string());
     }
 
-    Order::mark_as_shipped(&mut *db, order.id.unwrap())
+    Order::mark_as_awarded(&mut *db, order.id.unwrap())
         .await
-        .map_err(|_| "failed to mark order as shipped.".to_string())
+        .map_err(|_| "failed to mark case as awarded.".to_string())
 }
 
 #[put("/<id>/seller_cancel")]
@@ -187,11 +181,11 @@ async fn mark_order_as_canceled_by_seller(
     if order.seller_user_id != user.id() {
         return Err("User is not the order seller.".to_string());
     };
-    if order.shipped {
-        return Err("order is already shipped.".to_string());
+    if order.awarded {
+        return Err("case has already been awarded.".to_string());
     };
     if order.canceled_by_seller || order.canceled_by_buyer {
-        return Err("order is already canceled.".to_string());
+        return Err("case has already been canceled.".to_string());
     }
 
     Order::mark_as_canceled_by_seller(&mut *db, order.id.unwrap())
@@ -236,8 +230,8 @@ async fn mark_order_as_canceled_by_buyer(
     if order.buyer_user_id != user.id() {
         return Err("User is not the order buyer.".to_string());
     };
-    if order.shipped {
-        return Err("order is already shipped.".to_string());
+    if order.awarded{
+        return Err("case has already been rewarded".to_string());
     };
     if order.canceled_by_seller || order.canceled_by_buyer {
         return Err("order is already canceled.".to_string());
@@ -285,8 +279,8 @@ async fn create_order_review(
     let review_rating = order_review_info.review_rating.unwrap_or(0);
     let review_text = order_review_info.review_text;
 
-    if !order.shipped {
-        return Err("Cannot post review for order that is not shipped.".to_string());
+    if !order.awarded {
+        return Err("Cannot post review for order that is not awarded.".to_string());
     };
     if user.id() != order.buyer_user_id {
         return Err("User is not the buyer.".to_string());
@@ -338,7 +332,7 @@ pub fn order_stage() -> AdHoc {
     AdHoc::on_ignite("Order Stage", |rocket| async {
         rocket.mount(
             "/order",
-            routes![index, ship, seller_cancel, buyer_cancel, new_review],
+            routes![index, award, seller_cancel, buyer_cancel, new_review],
         )
     })
 }

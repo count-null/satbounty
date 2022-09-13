@@ -9,7 +9,7 @@
     <div class="row">
 
       <h3>My Processing Orders</h3>
-      <p>Orders you have received that you have not yet shipped</p>
+      <p>Cases you have recieved for bounties not yet awarded</p>
 
       <div class="twelve columns">
 	{% include "ordercardpage" %}

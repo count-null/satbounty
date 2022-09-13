@@ -18,25 +18,20 @@
 
     <h3>Prepare Order</h3>
 
-    <p><a href="/listing/{{ listing_display.listing.public_id }}?shipping_option_id={{ selected_shipping_option.public_id }}">Back to Listing</a></p>
+    <p><a href="/listing/{{ listing_display.listing.public_id }}">Back to Listing</a></p>
 
     <p><b>Listing</b>: {{ listing_display.listing.title }} ({{ listing_display.listing.price_sat }} sats)</p>
     <p><b>Quantity</b>: {{ quantity }}</p>
-    <p><b>Shipping Option</b>: {{ selected_shipping_option.title }} ({{ selected_shipping_option.price_sat }} sats)</p>
-    <p><b>Shipping option description</b>: {{ selected_shipping_option.description }}</p>
 
-    <p><b>Total Price</b>: {{ quantity }} x ({{ listing_display.listing.price_sat }} sats + {{ selected_shipping_option.price_sat }} sats) = <b>{{ quantity * (selected_shipping_option.price_sat + listing_display.listing.price_sat) }} sats</b></p>
+    <p><b>Total Price</b>: {{ quantity }} x ({{ listing_display.listing.price_sat }} sats) = <b>{{ quantity * listing_display.listing.price_sat }} sats</b></p>
 
     <p><b>Seller PGP Key</b>: {% if seller_user_settings.pgp_key %}<pre>{{ seller_user_settings.pgp_key }}</pre>{% else %}Not set{% endif %}</p>
 
     <form action="/prepare_order/{{ listing_display.listing.public_id }}/new" method="post">
-      <input type="hidden" id="shipping_option_id" name="shipping_option_id" value="{{ selected_shipping_option.public_id }}">
       <input type="hidden"
              name="quantity" id="quantity" value="{{ quantity }}" />
-      <label for="shipping_instructions">Please enter your name and address as it would apper on a letter (encrypt with the seller PGP key):</label>
-      <textarea placeholder="shipping instructions..."
-		name="shipping_instructions" id="shipping_instructions" placeholder="enter shipping instructions ..." value=""
-		class="u-full-width"></textarea>
+      <label for="case_details">Describe your case for why you deserve the bounty reward. Use markdown syntax for links and images.</label>
+      <textarea name="case_details" id="case_details" placeholder="Here is some evidence that I completed the bounty ..." value="" class="u-full-width"></textarea>
       <input type="submit" value="Create Order">
     </form>
 

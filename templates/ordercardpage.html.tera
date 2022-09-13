@@ -18,7 +18,7 @@
 	{% if not order_card.order.paid %}
 	Not paid
 	{% else %}
-	{% if order_card.order.shipped %}Shipped{% elif order_card.order.canceled_by_seller%}Canceled by seller{% elif order_card.order.canceled_by_buyer %}Canceled by buyer{% else %}Processing (waiting for seller to ship){% endif %}
+	{% if order_card.order.awarded %}Awarded{% elif order_card.order.canceled_by_seller%}Canceled by seller{% elif order_card.order.canceled_by_buyer %}Canceled by buyer{% else %}Pending ... (waiting for bounty to be awarded){% endif %}
 	{% endif %}
       </td>
       <td><a href="/order/{{ order_card.order.public_id }}">{{ order_card.order.public_id }}</a></td>

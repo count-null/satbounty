@@ -2,7 +2,7 @@ use crate::base::BaseContext;
 use crate::config::Config;
 use crate::db::Db;
 use crate::lightning;
-use crate::models::{Listing, ListingDisplay, Order, OrderInfo, ShippingOption, UserSettings};
+use crate::models::{Listing, ListingDisplay, Order, OrderInfo,  UserSettings};
 use crate::user_account::ActiveUser;
 use crate::util;
 use pgp::composed::{Deserializable, Message};
@@ -26,7 +26,6 @@ struct Context {
     base_context: BaseContext,
     flash: Option<(String, String)>,
     listing_display: Option<ListingDisplay>,
-    selected_shipping_option: ShippingOption,
     quantity: i32,
     seller_user_settings: UserSettings,
 }
@@ -35,7 +34,6 @@ impl Context {
     pub async fn raw(
         mut db: Connection<Db>,
         listing_id: &str,
-        shipping_option_id: &str,
         quantity: i32,
         flash: Option<(String, String)>,
         user: User,
@@ -47,9 +45,6 @@ impl Context {
         let listing_display = ListingDisplay::single_by_public_id(&mut db, listing_id)
             .await
             .map_err(|_| "failed to get admin settings.")?;
-        let shipping_option = ShippingOption::single_by_public_id(&mut db, shipping_option_id)
-            .await
-            .map_err(|_| "failed to get shipping option.")?;
         let seller_user_settings = UserSettings::single(&mut db, listing_display.listing.user_id)
             .await
             .map_err(|_| "failed to get visited user settings.")?;
@@ -57,7 +52,6 @@ impl Context {
             base_context,
             flash,
             listing_display: Some(listing_display),
-            selected_shipping_option: shipping_option,
             quantity,
             seller_user_settings,
         })
@@ -93,7 +87,7 @@ async fn new(
             Err(Flash::error(
                 Redirect::to(uri!(
                     "/prepare_order",
-                    index(id, order_info.shipping_option_id, 1)
+                    index(id, 1)
                 )),
                 e,
             ))
@@ -111,15 +105,11 @@ async fn create_order(
     let listing = Listing::single_by_public_id(db, listing_id)
         .await
         .map_err(|_| "failed to get listing")?;
-    let shipping_option = ShippingOption::single_by_public_id(db, &order_info.shipping_option_id)
-        .await
-        .map_err(|_| "failed to get shipping option.")?;
     let now = util::current_time_millis();
-    let shipping_instructions = order_info.shipping_instructions;
+    let case_details = order_info.case_details;
     let quantity = order_info.quantity.unwrap_or(0);
 
-    let price_per_unit_with_shipping_sat: u64 = listing.price_sat + shipping_option.price_sat;
-    let amount_owed_sat: u64 = (quantity as u64) * price_per_unit_with_shipping_sat;
+    let amount_owed_sat: u64 = (quantity as u64) * listing.price_sat; 
     // let market_fee_sat: u64 = (amount_owed_sat * (listing.fee_rate_basis_points as u64)) / 10000;
     let market_fee_sat: u64 = divide_round_up(
         amount_owed_sat * (listing.fee_rate_basis_points as u64),
@@ -128,14 +118,14 @@ async fn create_order(
     let seller_credit_sat: u64 = amount_owed_sat - market_fee_sat;
 
     let (message, _) =
-        Message::from_string(&shipping_instructions).map_err(|_| "Invalid PGP message.")?;
+        Message::from_string(&case_details).map_err(|_| "Invalid PGP message.")?;
     info!("message: {:?}", &message);
 
-    if shipping_instructions.is_empty() {
-        return Err("Shipping instructions cannot be empty.".to_string());
+    if case_details.is_empty() {
+        return Err("Case details cannot be empty.".to_string());
     };
-    if shipping_instructions.len() > 4096 {
-        return Err("Shipping instructions length is too long.".to_string());
+    if case_details.len() > 4096 {
+        return Err("Case details length is too long.".to_string());
     };
     if listing.user_id == user.id() {
         return Err("Listing belongs to same user as buyer.".to_string());
@@ -145,9 +135,6 @@ async fn create_order(
     };
     if listing.deactivated_by_seller || listing.deactivated_by_admin {
         return Err("Listing has been deactivated.".to_string());
-    };
-    if shipping_option.listing_id != listing.id.unwrap() {
-        return Err("Shipping option not associated with listing.".to_string());
     };
     if user.is_admin {
         return Err("Admin user cannot create an order.".to_string());
@@ -180,12 +167,11 @@ async fn create_order(
         buyer_user_id: user.id(),
         seller_user_id: listing.user_id,
         listing_id: listing.id.unwrap(),
-        shipping_option_id: shipping_option.id.unwrap(),
-        shipping_instructions: shipping_instructions.to_string(),
+        case_details: case_details.to_string(),
         amount_owed_sat,
         seller_credit_sat,
         paid: false,
-        shipped: false,
+        awarded: false,
         canceled_by_seller: false,
         canceled_by_buyer: false,
         reviewed: false,
@@ -217,11 +203,10 @@ fn divide_round_up(dividend: u64, divisor: u64) -> u64 {
     (dividend + divisor - 1) / divisor
 }
 
-#[get("/<id>?<shipping_option_id>&<quantity>")]
+#[get("/<id>?<quantity>")]
 async fn index(
     flash: Option<FlashMessage<'_>>,
     id: &str,
-    shipping_option_id: &str,
     quantity: usize,
     db: Connection<Db>,
     active_user: ActiveUser,
@@ -231,7 +216,6 @@ async fn index(
     let context = Context::raw(
         db,
         id,
-        shipping_option_id,
         quantity.try_into().unwrap(),
         flash,
         active_user.user,

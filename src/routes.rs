@@ -200,7 +200,6 @@ pub fn stage(config: Config) -> AdHoc {
             .attach(crate::listing::listing_stage())
             .attach(crate::new_listing::new_listing_stage())
             .attach(crate::update_listing_images::update_listing_images_stage())
-            .attach(crate::update_shipping_options::update_shipping_options_stage())
             .attach(crate::user::user_stage())
             .attach(crate::user_profile::user_profile_stage())
             .attach(crate::update_market_name::update_market_name_stage())

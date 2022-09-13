@@ -1,6 +1,6 @@
 use crate::base::BaseContext;
 use crate::db::Db;
-use crate::models::{Listing, ListingDisplay, ShippingOption};
+use crate::models::{Listing, ListingDisplay};
 use crate::user_account::ActiveUser;
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
@@ -77,9 +77,6 @@ async fn submit_listing(db: &mut Connection<Db>, id: &str, user: User) -> Result
     let listing = Listing::single_by_public_id(db, id)
         .await
         .map_err(|_| "failed to get listing")?;
-    let shipping_options = ShippingOption::all_for_listing(db, listing.id.unwrap())
-        .await
-        .map_err(|_| "failed to get shipping options for listing")?;
     if listing.user_id != user.id() {
         return Err("Listing belongs to a different user.".to_string());
     };
@@ -88,9 +85,6 @@ async fn submit_listing(db: &mut Connection<Db>, id: &str, user: User) -> Result
     };
     if listing.approved {
         return Err("Listing is already approved.".to_string());
-    };
-    if shipping_options.is_empty() {
-        return Err("At least one shipping option required.".to_string());
     };
 
     Listing::mark_as_submitted(db, id)

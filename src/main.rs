@@ -48,7 +48,6 @@ mod update_listing_images;
 mod update_market_name;
 mod update_max_allowed_users;
 mod update_pgp_info;
-mod update_shipping_options;
 mod update_user_bond_price;
 mod update_user_pgp_info;
 mod user;
