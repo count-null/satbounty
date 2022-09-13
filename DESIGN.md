@@ -30,6 +30,8 @@ MVP Design Criteria:
 - Users can view case submissions for bounties they have created
 - Users can mark a case as awarded
 - Once a case is awarded, the reward is credited to the user who submitted the case
+- Their case is now public and shown alonside the bounty
+- If the case was PGP encrypted, do not show it publicly 
 - The bounty is marked as “completed” 
 - Non-winning users are credited any case submission fee
 - Fees unable to return are credited to the admin 
