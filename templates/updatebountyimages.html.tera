@@ -4,10 +4,10 @@
 <div class="full-width-container">
   <p><!--Nothing to see here --></p>
 
-  <h3>{{ listing_display.listing.title }}</h3>
+  <h3>{{ bounty_display.bounty.title }}</h3>
 
-  <h5>Add Listing Images</h5>
-  <p><a href="/listing/{{ listing_display.listing.public_id }}">Back to listing</a></p>
+  <h5>Add Bounty Images</h5>
+  <p><a href="/bounty/{{ bounty_display.bounty.public_id }}">Back to bounty</a></p>
 
   <div class="row">
 
@@ -18,7 +18,7 @@
 
 	<br>
 
-	<form action="/update_listing_images/{{ listing_display.listing.public_id }}/add_image" method="post" enctype="multipart/form-data">
+	<form action="/update_bounty_images/{{ bounty_display.bounty.public_id }}/add_image" method="post" enctype="multipart/form-data">
 	  <label for="file">Select an image file to upload</label>
           <input type="file" placeholder="upload a file..."
 		 name="file" id="file" value="" autofocus
@@ -32,14 +32,14 @@
           <input type="submit" value="add image">
 	</form>
 
-	{% for image in listing_display.images %}
+	{% for image in bounty_display.images %}
 	<li>
 	  <img src="data:image/jpeg;base64,{{ image.image_data_base64 }}" style="width:512px;height:512px;" />
-	  <form class="inline" action="/update_listing_images/{{listing_display.listing.public_id}}/set_primary/{{image.public_id}}" method="post">
+	  <form class="inline" action="/update_bounty_images/{{bounty_display.bounty.public_id}}/set_primary/{{image.public_id}}" method="post">
             <input type="hidden" name="_method" value="put" />
             <button class="link" type="submit">set primary</button>
 	  </form>
-	  <form class="inline" action="/update_listing_images/{{listing_display.listing.public_id}}/add_image/{{image.public_id}}" method="post">
+	  <form class="inline" action="/update_bounty_images/{{bounty_display.bounty.public_id}}/add_image/{{image.public_id}}" method="post">
             <input type="hidden" name="_method" value="delete" />
             <button class="primary small" type="submit">delete</button>
 	  </form>

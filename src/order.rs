@@ -2,7 +2,7 @@ use crate::base::BaseContext;
 use crate::config::Config;
 use crate::db::Db;
 use crate::lightning;
-use crate::models::{Listing, Order, ReviewInput, RocketAuthUser};
+use crate::models::{Bounty, Order, ReviewInput, RocketAuthUser};
 use crate::user_account::ActiveUser;
 use crate::util;
 use rocket::fairing::AdHoc;
@@ -23,7 +23,7 @@ struct Context {
     base_context: BaseContext,
     flash: Option<(String, String)>,
     order: Order,
-    maybe_listing: Option<Listing>,
+    maybe_bounty: Option<Bounty>,
     maybe_seller_user: Option<RocketAuthUser>,
     user: Option<User>,
     admin_user: Option<AdminUser>,
@@ -46,10 +46,10 @@ impl Context {
         let order = Order::single_by_public_id(&mut db, order_id)
             .await
             .map_err(|_| "failed to get order.")?;
-        let maybe_listing = Listing::single(&mut db, order.listing_id).await.ok();
-        // .map_err(|_| "failed to get listing.")?;
+        let maybe_bounty = Bounty::single(&mut db, order.bounty_id).await.ok();
+        // .map_err(|_| "failed to get bounty.")?;
         // {
-        //     Ok(listing) => Some(listing),
+        //     Ok(bounty) => Some(bounty),
         //     Err(_) => None
         // };
         let maybe_seller_user = RocketAuthUser::single(&mut db, order.seller_user_id)
@@ -64,7 +64,7 @@ impl Context {
             base_context,
             flash,
             order,
-            maybe_listing,
+            maybe_bounty,
             maybe_seller_user,
             user,
             admin_user,

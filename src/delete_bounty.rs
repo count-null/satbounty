@@ -1,6 +1,6 @@
 use crate::base::BaseContext;
 use crate::db::Db;
-use crate::models::{Listing, ListingDisplay};
+use crate::models::{Bounty, BountyDisplay};
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
 use rocket::response::{Flash, Redirect};
@@ -14,13 +14,13 @@ use rocket_dyn_templates::Template;
 struct Context {
     base_context: BaseContext,
     flash: Option<(String, String)>,
-    listing_display: Option<ListingDisplay>,
+    bounty_display: Option<BountyDisplay>,
 }
 
 impl Context {
     pub async fn raw(
         mut db: Connection<Db>,
-        listing_id: &str,
+        bounty_id: &str,
         flash: Option<(String, String)>,
         user: User,
         admin_user: Option<AdminUser>,
@@ -28,18 +28,18 @@ impl Context {
         let base_context = BaseContext::raw(&mut db, Some(user.clone()), admin_user.clone())
             .await
             .map_err(|_| "failed to get base template.")?;
-        let listing_display = ListingDisplay::single_by_public_id(&mut db, listing_id)
+        let bounty_display = BountyDisplay::single_by_public_id(&mut db, bounty_id)
             .await
-            .map_err(|_| "failed to get listing display.")?;
+            .map_err(|_| "failed to get bounty display.")?;
 
-        if listing_display.listing.user_id != user.id() && admin_user.is_none() {
-            return Err("User does not have permission to delete listing.".to_string());
+        if bounty_display.bounty.user_id != user.id() && admin_user.is_none() {
+            return Err("User does not have permission to delete bounty.".to_string());
         };
 
         Ok(Context {
             base_context,
             flash,
-            listing_display: Some(listing_display),
+            bounty_display: Some(bounty_display),
         })
     }
 }
@@ -51,38 +51,38 @@ async fn delete(
     user: User,
     admin_user: Option<AdminUser>,
 ) -> Result<Flash<Redirect>, Flash<Redirect>> {
-    match delete_listing(id, &mut db, user.clone(), admin_user.clone()).await {
+    match delete_bounty(id, &mut db, user.clone(), admin_user.clone()).await {
         Ok(_) => Ok(Flash::success(
             Redirect::to(uri!("/")),
-            "Listing was deleted.",
+            "Bounty was deleted.",
         )),
         Err(e) => {
             error_!("DB deletion({}) error: {}", id, e);
             Err(Flash::error(
-                Redirect::to(uri!("/update_listing_images", index(id))),
-                "Failed to delete listing image.",
+                Redirect::to(uri!("/update_bounty_images", index(id))),
+                "Failed to delete bounty image.",
             ))
         }
     }
 }
 
-async fn delete_listing(
-    listing_id: &str,
+async fn delete_bounty(
+    bounty_id: &str,
     db: &mut Connection<Db>,
     user: User,
     admin_user: Option<AdminUser>,
 ) -> Result<(), String> {
-    let listing = Listing::single_by_public_id(&mut *db, listing_id)
+    let bounty = Bounty::single_by_public_id(&mut *db, bounty_id)
         .await
-        .map_err(|_| "failed to get listing")?;
+        .map_err(|_| "failed to get bounty")?;
 
-    if listing.user_id != user.id() && admin_user.is_none() {
-        return Err("User does not have permission to delete listing.".to_string());
+    if bounty.user_id != user.id() && admin_user.is_none() {
+        return Err("User does not have permission to delete bounty.".to_string());
     };
 
-    Listing::delete(listing.id.unwrap(), &mut *db)
+    Bounty::delete(bounty.id.unwrap(), &mut *db)
         .await
-        .map_err(|_| "failed to delete listing.".to_string())?;
+        .map_err(|_| "failed to delete bounty.".to_string())?;
 
     Ok(())
 }
@@ -99,11 +99,11 @@ async fn index(
     let context = Context::raw(db, id, flash, user, admin_user)
         .await
         .map_err(|_| "failed to get template context.")?;
-    Ok(Template::render("deletelisting", context))
+    Ok(Template::render("deletebounty", context))
 }
 
-pub fn delete_listing_stage() -> AdHoc {
-    AdHoc::on_ignite("Delete Listing Stage", |rocket| async {
-        rocket.mount("/delete_listing", routes![index, delete])
+pub fn delete_bounty_stage() -> AdHoc {
+    AdHoc::on_ignite("Delete Bounty Stage", |rocket| async {
+        rocket.mount("/delete_bounty", routes![index, delete])
     })
 }

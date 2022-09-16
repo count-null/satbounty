@@ -93,7 +93,7 @@ async fn index(
 pub fn update_fee_rate_stage() -> AdHoc {
     AdHoc::on_ignite("Update Fee Rate Stage", |rocket| async {
         rocket
-            // .mount("/update_listing_images", routes![index, new])
+            // .mount("/update_bounty_images", routes![index, new])
             .mount("/update_fee_rate", routes![index, update])
     })
 }

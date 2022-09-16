@@ -7,9 +7,9 @@
   <p><!--Nothing to see here --></p>
 
   <div class="row">
-    <h4>Create New Listing</h4>
+    <h4>Create New Bounty</h4>
     <p>Market will collect a {{ admin_settings.fee_rate_basis_points / 100 }}% fee from each sale</p>
-    <form action="/new_listing" method="post">
+    <form action="/new_bounty" method="post">
       <label for="title">Enter the item name</label>
       <input type="text" placeholder="item name..."
              name="title" id="title" value="" autofocus
@@ -26,7 +26,7 @@
       </small>
       {% endif %}
       <label for="submit"></label>
-      <input type="submit" value="create listing">
+      <input type="submit" value="create bounty">
     </form>
   </div>
 

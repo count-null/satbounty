@@ -86,7 +86,7 @@ async fn index(
 pub fn update_max_allowed_users_stage() -> AdHoc {
     AdHoc::on_ignite("Update Max Allowed Users Stage", |rocket| async {
         rocket
-            // .mount("/update_listing_images", routes![index, new])
+            // .mount("/update_bounty_images", routes![index, new])
             .mount("/update_max_allowed_users", routes![index, update])
     })
 }

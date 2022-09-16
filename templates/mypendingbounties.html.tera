@@ -1,18 +1,17 @@
 {% extends "base" %}
 {% block body %}
 
-{% include "search_form" %}
-
-{% if not admin_user %}
-<a href="/new_listing">Add New Listing</a>
-{% endif %}
+<br>
 
   <div class="container">
     <p><!--Nothing to see here --></p>
 
     <div class="row">
+
+      <h3>My Pending Bounties</h3>
+
       <div class="twelve columns">
-	{% include "listingtablepage" %}
+	{% include "bountytablepage" %}
       </div>
     </div>
   </div>

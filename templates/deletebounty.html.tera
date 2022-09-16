@@ -4,10 +4,10 @@
 <div class="full-width-container">
   <p><!--Nothing to see here --></p>
 
-  <h3>{{ listing_display.listing.title }}</h3>
+  <h3>{{ bounty_display.bounty.title }}</h3>
 
-  <h5>Delete Listing</h5>
-  <p><a href="/listing/{{ listing_display.listing.public_id }}">Back to listing</a></p>
+  <h5>Delete Bounty</h5>
+  <p><a href="/bounty/{{ bounty_display.bounty.public_id }}">Back to bounty</a></p>
 
   <div class="row">
 
@@ -18,9 +18,9 @@
 
 	<br>
 
-	<p>Are you sure you want to delete this listing?</p>
+	<p>Are you sure you want to delete this bounty?</p>
 
-	  <form class="inline" action="/delete_listing/{{listing_display.listing.public_id}}" method="post">
+	  <form class="inline" action="/delete_bounty/{{bounty_display.bounty.public_id}}" method="post">
             <input type="hidden" name="_method" value="delete" />
             {% if flash %}
             <small class="field-{{flash.0}}-msg">

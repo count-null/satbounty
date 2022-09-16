@@ -1,6 +1,6 @@
 use crate::base::BaseContext;
 use crate::db::Db;
-use crate::models::ListingCardDisplay;
+use crate::models::BountyCardDisplay;
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
 use rocket::serde::Serialize;
@@ -17,7 +17,7 @@ struct Context {
     base_context: BaseContext,
     flash: Option<(String, String)>,
     search_text: String,
-    listing_cards: Vec<ListingCardDisplay>,
+    bounty_cards: Vec<BountyCardDisplay>,
     page_num: u32,
 }
 
@@ -34,19 +34,19 @@ impl Context {
             .await
             .map_err(|_| "failed to get base template.")?;
         let page_num = maybe_page_num.unwrap_or(1);
-        let listing_cards = ListingCardDisplay::all_active_for_search_text(
+        let bounty_cards = BountyCardDisplay::all_active_for_search_text(
             &mut db,
             &search_text,
             PAGE_SIZE,
             page_num,
         )
         .await
-        .map_err(|_| "failed to get approved listings.")?;
+        .map_err(|_| "failed to get approved bounties.")?;
         Ok(Context {
             base_context,
             flash,
             search_text,
-            listing_cards,
+            bounty_cards,
             page_num,
         })
     }

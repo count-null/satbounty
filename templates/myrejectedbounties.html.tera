@@ -8,10 +8,10 @@
 
     <div class="row">
 
-      <h3>My Rejected Listings</h3>
+      <h3>My Rejected Bounty</h3>
 
       <div class="twelve columns">
-	{% include "listingtablepage" %}
+	{% include "bountytablepage" %}
       </div>
     </div>
   </div>

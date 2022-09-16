@@ -62,6 +62,6 @@ async fn index(
 pub fn my_unpaid_orders_stage() -> AdHoc {
     AdHoc::on_ignite("My Unpaid Orders Stage", |rocket| async {
         rocket.mount("/my_unpaid_orders", routes![index])
-        // .mount("/listing", routes![new])
+        // .mount("/bounty", routes![new])
     })
 }

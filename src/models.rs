@@ -14,7 +14,7 @@ use std::result::Result;
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct Listing {
+pub struct Bounty {
     pub id: Option<i32>,
     pub public_id: String,
     pub user_id: i32,
@@ -31,7 +31,7 @@ pub struct Listing {
 }
 
 #[derive(Debug, FromForm)]
-pub struct InitialListingInfo {
+pub struct InitialBountyInfo {
     pub title: String,
     pub description: String,
     pub price_sat: Option<u64>,
@@ -44,44 +44,44 @@ pub struct FileUploadForm<'f> {
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct ListingImage {
+pub struct BountyImage {
     pub id: Option<i32>,
     pub public_id: String,
-    pub listing_id: i32,
+    pub bounty_id: i32,
     pub image_data: Vec<u8>,
     pub is_primary: bool,
 }
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct ListingDisplay {
-    pub listing: Listing,
-    pub images: Vec<ListingImageDisplay>,
+pub struct BountyDisplay {
+    pub bounty: Bounty,
+    pub images: Vec<BountyImageDisplay>,
     pub user: Option<RocketAuthUser>,
 }
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct ListingCardDisplay {
-    pub listing: Listing,
-    pub image: Option<ListingImageDisplay>,
+pub struct BountyCardDisplay {
+    pub bounty: Bounty,
+    pub image: Option<BountyImageDisplay>,
     pub user: RocketAuthUser,
 }
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct ListingCard {
-    pub listing: Listing,
-    pub image: Option<ListingImage>,
+pub struct BountyCard {
+    pub bounty: Bounty,
+    pub image: Option<BountyImage>,
     pub user: RocketAuthUser,
 }
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct ListingImageDisplay {
+pub struct BountyImageDisplay {
     pub id: Option<i32>,
     pub public_id: String,
-    pub listing_id: i32,
+    pub bounty_id: i32,
     pub image_data_base64: String,
     pub is_primary: bool,
 }
@@ -144,7 +144,7 @@ pub struct Order {
     pub quantity: u32,
     pub buyer_user_id: i32,
     pub seller_user_id: i32,
-    pub listing_id: i32,
+    pub bounty_id: i32,
     pub case_details: String,
     pub amount_owed_sat: u64,
     pub seller_credit_sat: u64,
@@ -172,8 +172,8 @@ pub struct OrderInfo {
 #[serde(crate = "rocket::serde")]
 pub struct OrderCard {
     pub order: Order,
-    pub listing: Option<Listing>,
-    pub image: Option<ListingImage>,
+    pub bounty: Option<Bounty>,
+    pub image: Option<BountyImage>,
     pub user: Option<RocketAuthUser>,
 }
 
@@ -187,7 +187,7 @@ pub struct AccountInfo {
 #[derive(Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
 pub struct AdminInfo {
-    pub num_pending_listings: u32,
+    pub num_pending_bounties: u32,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -274,11 +274,11 @@ impl Default for UserSettings {
     }
 }
 
-impl Listing {
+impl Bounty {
     /// Returns the id of the inserted row.
     pub async fn insert(
-        listing: Listing,
-        max_unapproved_listings: u32,
+        bounty: Bounty,
+        max_unapproved_bounties: u32,
         db: &mut Connection<Db>,
     ) -> Result<i32, String> {
         let mut tx = db
@@ -286,50 +286,50 @@ impl Listing {
             .await
             .map_err(|_| "failed to begin transaction.")?;
 
-        let price_sat: i64 = listing.price_sat.try_into().unwrap();
-        let created_time_ms: i64 = listing.created_time_ms.try_into().unwrap();
+        let price_sat: i64 = bounty.price_sat.try_into().unwrap();
+        let created_time_ms: i64 = bounty.created_time_ms.try_into().unwrap();
 
         let insert_result = sqlx::query!(
-            "INSERT INTO listings (public_id, user_id, title, description, price_sat, fee_rate_basis_points, submitted, reviewed, approved, deactivated_by_seller, deactivated_by_admin, created_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            listing.public_id,
-            listing.user_id,
-            listing.title,
-            listing.description,
+            "INSERT INTO bounties (public_id, user_id, title, description, price_sat, fee_rate_basis_points, submitted, reviewed, approved, deactivated_by_seller, deactivated_by_admin, created_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            bounty.public_id,
+            bounty.user_id,
+            bounty.title,
+            bounty.description,
             price_sat,
-            listing.fee_rate_basis_points,
-            listing.submitted,
-            listing.reviewed,
-            listing.approved,
-            listing.deactivated_by_seller,
-            listing.deactivated_by_admin,
+            bounty.fee_rate_basis_points,
+            bounty.submitted,
+            bounty.reviewed,
+            bounty.approved,
+            bounty.deactivated_by_seller,
+            bounty.deactivated_by_admin,
             created_time_ms,
         )
             .execute(&mut *tx)
             .await
-            .map_err(|_| "failed to insert new listing.")?;
+            .map_err(|_| "failed to insert new bounty.")?;
 
-        let num_unapproved_listings = sqlx::query!(
+        let num_unapproved_bounties = sqlx::query!(
             "
 select
- COUNT(listings.id) as num_unapproved_listings
+ COUNT(bounties.id) as num_unapproved_bounties
 from
- listings
+ bounties
 WHERE
- listings.user_id = ?
+ bounties.user_id = ?
 AND
- NOT listings.approved
+ NOT bounties.approved
 ;",
-            listing.user_id,
+            bounty.user_id,
         )
         .fetch_one(&mut *tx)
-        .map_ok(|r| r.num_unapproved_listings as u32)
+        .map_ok(|r| r.num_unapproved_bounties as u32)
         .await
-        .map_err(|_| "failed to get count of unapproved listings.")?;
+        .map_err(|_| "failed to get count of unapproved bounties.")?;
 
-        if num_unapproved_listings > max_unapproved_listings {
+        if num_unapproved_bounties > max_unapproved_bounties {
             return Err(format!(
-                "more than {:?} unapproved listings not allowed.",
-                max_unapproved_listings
+                "more than {:?} unapproved bounties not allowed.",
+                max_unapproved_bounties
             ));
         }
 
@@ -340,10 +340,10 @@ AND
         Ok(insert_result.last_insert_rowid() as _)
     }
 
-    pub async fn single(db: &mut Connection<Db>, id: i32) -> Result<Listing, sqlx::Error> {
-        let listing = sqlx::query!("select * from listings WHERE id = ?;", id)
+    pub async fn single(db: &mut Connection<Db>, id: i32) -> Result<Bounty, sqlx::Error> {
+        let bounty = sqlx::query!("select * from bounties WHERE id = ?;", id)
             .fetch_one(&mut **db)
-            .map_ok(|r| Listing {
+            .map_ok(|r| Bounty {
                 id: Some(r.id.try_into().unwrap()),
                 public_id: r.public_id,
                 user_id: r.user_id.try_into().unwrap(),
@@ -360,16 +360,16 @@ AND
             })
             .await?;
 
-        Ok(listing)
+        Ok(bounty)
     }
 
     pub async fn single_by_public_id(
         db: &mut Connection<Db>,
         public_id: &str,
-    ) -> Result<Listing, sqlx::Error> {
-        let listing = sqlx::query!("select * from listings WHERE public_id = ?;", public_id)
+    ) -> Result<Bounty, sqlx::Error> {
+        let bounty = sqlx::query!("select * from bounties WHERE public_id = ?;", public_id)
             .fetch_one(&mut **db)
-            .map_ok(|r| Listing {
+            .map_ok(|r| Bounty {
                 id: Some(r.id.try_into().unwrap()),
                 public_id: r.public_id,
                 user_id: r.user_id.try_into().unwrap(),
@@ -386,7 +386,7 @@ AND
             })
             .await?;
 
-        Ok(listing)
+        Ok(bounty)
     }
 
     pub async fn mark_as_submitted(
@@ -394,7 +394,7 @@ AND
         public_id: &str,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "UPDATE listings SET submitted = true WHERE public_id = ?",
+            "UPDATE bounties SET submitted = true WHERE public_id = ?",
             public_id,
         )
         .execute(&mut **db)
@@ -407,7 +407,7 @@ AND
         public_id: &str,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "UPDATE listings SET reviewed = true, approved = true WHERE public_id = ?",
+            "UPDATE bounties SET reviewed = true, approved = true WHERE public_id = ?",
             public_id,
         )
         .execute(&mut **db)
@@ -420,7 +420,7 @@ AND
         public_id: &str,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "UPDATE listings SET reviewed = true, approved = false WHERE public_id = ?",
+            "UPDATE bounties SET reviewed = true, approved = false WHERE public_id = ?",
             public_id,
         )
         .execute(&mut **db)
@@ -434,7 +434,7 @@ AND
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "
-UPDATE listings
+UPDATE bounties
 SET deactivated_by_seller = true
 WHERE
  public_id = ?
@@ -455,7 +455,7 @@ AND NOT (deactivated_by_seller OR deactivated_by_admin)
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "
-UPDATE listings
+UPDATE bounties
 SET deactivated_by_admin = true
 WHERE
  public_id = ?
@@ -471,26 +471,26 @@ AND NOT (deactivated_by_seller OR deactivated_by_admin)
     }
 
     pub async fn num_pending(db: &mut Connection<Db>) -> Result<u32, sqlx::Error> {
-        let num_listings = sqlx::query!(
+        let num_bounties = sqlx::query!(
             "
 select
- COUNT(listings.id) as num_pending_listings
+ COUNT(bounties.id) as num_pending_bounties
 from
- listings
+ bounties
 WHERE
- listings.submitted
+ bounties.submitted
 AND
- NOT listings.reviewed
+ NOT bounties.reviewed
 ;",
         )
         .fetch_one(&mut **db)
-        .map_ok(|r| r.num_pending_listings as u32)
+        .map_ok(|r| r.num_pending_bounties as u32)
         .await?;
 
-        Ok(num_listings)
+        Ok(num_bounties)
     }
 
-    pub async fn delete(listing_id: i32, db: &mut Connection<Db>) -> Result<usize, String> {
+    pub async fn delete(bounty_id: i32, db: &mut Connection<Db>) -> Result<usize, String> {
         let mut tx = db
             .begin()
             .await
@@ -498,27 +498,27 @@ AND
 
         let delete_result = sqlx::query!(
             "
-DELETE FROM listings
+DELETE FROM bounties
 WHERE
  id = ?
 ;",
-            listing_id
+            bounty_id
         )
         .execute(&mut *tx)
         .await
-        .map_err(|_| "failed to delete listing.")?;
+        .map_err(|_| "failed to delete bounty.")?;
 
         sqlx::query!(
             "
-DELETE from listingimages
+DELETE from bountyimages
 WHERE
- listing_id = ?
+ bounty_id = ?
 ;",
-            listing_id
+            bounty_id
         )
         .execute(&mut *tx)
         .await
-        .map_err(|_| "failed to delete images for listing.")?;
+        .map_err(|_| "failed to delete images for bounty.")?;
 
         tx.commit()
             .await
@@ -529,18 +529,18 @@ WHERE
     }
 }
 
-impl ListingImage {
+impl BountyImage {
     /// Returns the number of affected rows: 1.
     pub async fn insert(
-        listingimage: ListingImage,
+        bountyimage: BountyImage,
         db: &mut Connection<Db>,
     ) -> Result<usize, sqlx::Error> {
         let insert_result = sqlx::query!(
-            "INSERT INTO listingimages (public_id, listing_id, image_data, is_primary) VALUES (?, ?, ?, ?)",
-            listingimage.public_id,
-            listingimage.listing_id,
-            listingimage.image_data,
-            listingimage.is_primary,
+            "INSERT INTO bountyimages (public_id, bounty_id, image_data, is_primary) VALUES (?, ?, ?, ?)",
+            bountyimage.public_id,
+            bountyimage.bounty_id,
+            bountyimage.image_data,
+            bountyimage.is_primary,
         )
         .execute(&mut **db)
         .await?;
@@ -548,66 +548,66 @@ impl ListingImage {
         Ok(insert_result.rows_affected() as _)
     }
 
-    pub async fn all_for_listing(
+    pub async fn all_for_bounty(
         db: &mut Connection<Db>,
-        listing_id: i32,
-    ) -> Result<Vec<ListingImage>, sqlx::Error> {
-        let listing_images = sqlx::query!(
-            "select * from listingimages WHERE listing_id = ? ORDER BY listingimages.is_primary DESC;",
-            listing_id
+        bounty_id: i32,
+    ) -> Result<Vec<BountyImage>, sqlx::Error> {
+        let bounty_images = sqlx::query!(
+            "select * from bountyimages WHERE bounty_id = ? ORDER BY bountyimages.is_primary DESC;",
+            bounty_id
         )
         .fetch(&mut **db)
-        .map_ok(|r| ListingImage {
+        .map_ok(|r| BountyImage {
             id: r.id.map(|n| n.try_into().unwrap()),
             public_id: r.public_id,
-            listing_id: r.listing_id.try_into().unwrap(),
+            bounty_id: r.bounty_id.try_into().unwrap(),
             image_data: r.image_data,
             is_primary: r.is_primary,
         })
         .try_collect::<Vec<_>>()
         .await?;
 
-        Ok(listing_images)
+        Ok(bounty_images)
     }
 
     pub async fn single_by_public_id(
         db: &mut Connection<Db>,
         public_id: &str,
-    ) -> Result<ListingImage, sqlx::Error> {
-        let listing_image = sqlx::query!(
-            "select * from listingimages WHERE public_id = ?;",
+    ) -> Result<BountyImage, sqlx::Error> {
+        let bounty_image = sqlx::query!(
+            "select * from bountyimages WHERE public_id = ?;",
             public_id
         )
         .fetch_one(&mut **db)
-        .map_ok(|r| ListingImage {
+        .map_ok(|r| BountyImage {
             id: Some(r.id.try_into().unwrap()),
             public_id: r.public_id,
-            listing_id: r.listing_id.try_into().unwrap(),
+            bounty_id: r.bounty_id.try_into().unwrap(),
             image_data: r.image_data,
             is_primary: r.is_primary,
         })
         .await?;
 
-        Ok(listing_image)
+        Ok(bounty_image)
     }
 
     pub async fn mark_image_as_primary_by_public_id(
         db: &mut Connection<Db>,
-        listing_id: i32,
+        bounty_id: i32,
         image_id: &str,
     ) -> Result<usize, sqlx::Error> {
-        // Set all images for listing_id to not primary.
+        // Set all images for bounty_id to not primary.
         let update_primary_result = sqlx::query!(
             "
 UPDATE
- listingimages
+ bountyimages
 SET
  is_primary = (public_id = ?)
 WHERE
- listing_id = ?
+ bounty_id = ?
 ;",
             image_id,
-            listing_id
+            bounty_id
         )
         .execute(&mut **db)
         .await?;
@@ -621,7 +621,7 @@ WHERE
         db: &mut Connection<Db>,
     ) -> Result<usize, sqlx::Error> {
         let delete_result =
-            sqlx::query!("DELETE FROM listingimages WHERE public_id = ?", public_id)
+            sqlx::query!("DELETE FROM bountyimages WHERE public_id = ?", public_id)
                 .execute(&mut **db)
                 .await?;
 
@@ -659,82 +659,82 @@ impl RocketAuthUser {
     }
 }
 
-impl ListingDisplay {
+impl BountyDisplay {
     pub async fn single_by_public_id(
         db: &mut Connection<Db>,
         public_id: &str,
-    ) -> Result<ListingDisplay, sqlx::Error> {
-        let listing = Listing::single_by_public_id(&mut *db, public_id).await?;
-        let images = ListingImage::all_for_listing(&mut *db, listing.id.unwrap()).await?;
+    ) -> Result<BountyDisplay, sqlx::Error> {
+        let bounty = Bounty::single_by_public_id(&mut *db, public_id).await?;
+        let images = BountyImage::all_for_bounty(&mut *db, bounty.id.unwrap()).await?;
         let image_displays = images
             .iter()
-            .map(|img| ListingImageDisplay {
+            .map(|img| BountyImageDisplay {
                 id: img.id,
                 public_id: img.clone().public_id,
-                listing_id: img.listing_id,
+                bounty_id: img.bounty_id,
                 image_data_base64: util::to_base64(&img.image_data),
                 is_primary: img.is_primary,
             })
             .collect::<Vec<_>>();
-        let rocket_auth_user = RocketAuthUser::single(&mut *db, listing.user_id).await.ok();
+        let rocket_auth_user = RocketAuthUser::single(&mut *db, bounty.user_id).await.ok();
 
-        let listing_display = ListingDisplay {
-            listing,
+        let bounty_display = BountyDisplay {
+            bounty,
             images: image_displays,
             user: rocket_auth_user,
         };
 
-        Ok(listing_display)
+        Ok(bounty_display)
     }
 }
 
-impl ListingCard {
+impl BountyCard {
     pub async fn all_active(
         db: &mut Connection<Db>,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCard>, sqlx::Error> {
+    ) -> Result<Vec<BountyCard>, sqlx::Error> {
         // Example query for this kind of join/group by: https://stackoverflow.com/a/63037790/1639564
         // Other example query: https://stackoverflow.com/a/13698334/1639564
         // TODO: change WHERE condition to use dynamically calculated remaining quantity
         // based on number of awarded orders.
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let listing_cards =
+        let bounty_cards =
             sqlx::query!("
 select
- listings.id, listings.public_id, listings.user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- listings
+ bounties
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 INNER JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 INNER JOIN
  useraccounts
 ON
- listings.user_id = useraccounts.user_id
+ bounties.user_id = useraccounts.user_id
 AND
  NOT useraccounts.disabled
 WHERE
- listings.approved
+ bounties.approved
 AND
- not (listings.deactivated_by_seller OR listings.deactivated_by_admin)
+ not (bounties.deactivated_by_seller OR bounties.deactivated_by_admin)
 GROUP BY
- listings.id
-ORDER BY listings.created_time_ms DESC
+ bounties.id
+ORDER BY bounties.created_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;", limit, offset)
                 .fetch(&mut **db)
             .map_ok(|r| {
-                let l = Listing {
+                let l = Bounty {
                     id: Some(r.id.unwrap().try_into().unwrap()),
                     public_id: r.public_id.unwrap(),
                     user_id: r.user_id.unwrap().try_into().unwrap(),
@@ -749,10 +749,10 @@ OFFSET ?
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                 };
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -760,8 +760,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                ListingCard {
-                    listing: l,
+                BountyCard {
+                    bounty: l,
                     image: i,
                     user: u.unwrap(),
                 }
@@ -769,45 +769,45 @@ OFFSET ?
                 .try_collect::<Vec<_>>()
                 .await?;
 
-        Ok(listing_cards)
+        Ok(bounty_cards)
     }
 
     pub async fn all_deactivated(
         db: &mut Connection<Db>,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCard>, sqlx::Error> {
+    ) -> Result<Vec<BountyCard>, sqlx::Error> {
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let listing_cards =
+        let bounty_cards =
             sqlx::query!("
 select
- listings.id, listings.public_id, listings.user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- listings
+ bounties
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 INNER JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
- listings.approved
+ bounties.approved
 AND
- (listings.deactivated_by_seller OR listings.deactivated_by_admin)
+ (bounties.deactivated_by_seller OR bounties.deactivated_by_admin)
 GROUP BY
- listings.id
-ORDER BY listings.created_time_ms DESC
+ bounties.id
+ORDER BY bounties.created_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;", limit, offset)
                 .fetch(&mut **db)
             .map_ok(|r| {
-                let l = Listing {
+                let l = Bounty {
                     id: Some(r.id.unwrap().try_into().unwrap()),
                     public_id: r.public_id.unwrap(),
                     user_id: r.user_id.unwrap().try_into().unwrap(),
@@ -822,10 +822,10 @@ OFFSET ?
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                 };
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -833,8 +833,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                ListingCard {
-                    listing: l,
+                BountyCard {
+                    bounty: l,
                     image: i,
                     user: u.unwrap(),
                 }
@@ -842,49 +842,49 @@ OFFSET ?
                 .try_collect::<Vec<_>>()
                 .await?;
 
-        Ok(listing_cards)
+        Ok(bounty_cards)
     }
 
     pub async fn all_pending(
         db: &mut Connection<Db>,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCard>, sqlx::Error> {
+    ) -> Result<Vec<BountyCard>, sqlx::Error> {
         // Example query for this kind of join/group by: https://stackoverflow.com/a/63037790/1639564
         // Other example query: https://stackoverflow.com/a/13698334/1639564
         // TODO: change WHERE condition to use dynamically calculated remaining quantity
         // based on number of awarded cases.
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let listing_cards =
+        let bounty_cards =
             sqlx::query!("
 select
- listings.id, listings.public_id, listings.user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- listings
+ bounties
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 INNER JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
- listings.submitted
+ bounties.submitted
 AND
- NOT listings.reviewed
+ NOT bounties.reviewed
 GROUP BY
- listings.id
-ORDER BY listings.created_time_ms DESC
+ bounties.id
+ORDER BY bounties.created_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;", limit, offset)
                 .fetch(&mut **db)
             .map_ok(|r| {
-                let l = Listing {
+                let l = Bounty {
                     id: Some(r.id.unwrap().try_into().unwrap()),
                     public_id: r.public_id.unwrap(),
                     user_id: r.user_id.unwrap().try_into().unwrap(),
@@ -899,10 +899,10 @@ OFFSET ?
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                 };
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -910,8 +910,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                ListingCard {
-                    listing: l,
+                BountyCard {
+                    bounty: l,
                     image: i,
                     user: u.unwrap(),
                 }
@@ -919,7 +919,7 @@ OFFSET ?
                 .try_collect::<Vec<_>>()
                 .await?;
 
-        Ok(listing_cards)
+        Ok(bounty_cards)
     }
 
     pub async fn all_unsubmitted_for_user(
@@ -927,42 +927,42 @@ OFFSET ?
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCard>, sqlx::Error> {
+    ) -> Result<Vec<BountyCard>, sqlx::Error> {
         // Example query for this kind of join/group by: https://stackoverflow.com/a/63037790/1639564
         // Other example query: https://stackoverflow.com/a/13698334/1639564
         // TODO: change WHERE condition to use dynamically calculated remaining quantity
         // based on number of awarded cases.
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let listing_cards =
+        let bounty_cards =
             sqlx::query!("
 select
- listings.id, listings.public_id, listings.user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- listings
+ bounties
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 INNER JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
- not listings.submitted
+ not bounties.submitted
 AND
  users.id = ?
 GROUP BY
- listings.id
-ORDER BY listings.created_time_ms DESC
+ bounties.id
+ORDER BY bounties.created_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;", user_id, limit, offset)
                 .fetch(&mut **db)
             .map_ok(|r| {
-                let l = Listing {
+                let l = Bounty {
                     id: Some(r.id.unwrap().try_into().unwrap()),
                     public_id: r.public_id.unwrap(),
                     user_id: r.user_id.unwrap().try_into().unwrap(),
@@ -977,10 +977,10 @@ OFFSET ?
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                 };
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -988,8 +988,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                ListingCard {
-                    listing: l,
+                BountyCard {
+                    bounty: l,
                     image: i,
                     user: u.unwrap(),
                 }
@@ -997,7 +997,7 @@ OFFSET ?
                 .try_collect::<Vec<_>>()
                 .await?;
 
-        Ok(listing_cards)
+        Ok(bounty_cards)
     }
 
     pub async fn all_pending_for_user(
@@ -1005,44 +1005,44 @@ OFFSET ?
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCard>, sqlx::Error> {
+    ) -> Result<Vec<BountyCard>, sqlx::Error> {
         // Example query for this kind of join/group by: https://stackoverflow.com/a/63037790/1639564
         // Other example query: https://stackoverflow.com/a/13698334/1639564
         // TODO: change WHERE condition to use dynamically calculated remaining quantity
         // based on number of awarded cases. 
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let listing_cards =
+        let bounty_cards =
             sqlx::query!("
 select
- listings.id, listings.public_id, listings.user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- listings
+ bounties
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 INNER JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
- listings.submitted
+ bounties.submitted
 AND
- not listings.reviewed
+ not bounties.reviewed
 AND
  users.id = ?
 GROUP BY
- listings.id
-ORDER BY listings.created_time_ms DESC
+ bounties.id
+ORDER BY bounties.created_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;", user_id, limit, offset)
                 .fetch(&mut **db)
             .map_ok(|r| {
-                let l = Listing {
+                let l = Bounty {
                     id: Some(r.id.unwrap().try_into().unwrap()),
                     public_id: r.public_id.unwrap(),
                     user_id: r.user_id.unwrap().try_into().unwrap(),
@@ -1057,10 +1057,10 @@ OFFSET ?
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                 };
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -1068,8 +1068,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                ListingCard {
-                    listing: l,
+                BountyCard {
+                    bounty: l,
                     image: i,
                     user: u.unwrap(),
                 }
@@ -1077,7 +1077,7 @@ OFFSET ?
                 .try_collect::<Vec<_>>()
                 .await?;
 
-        Ok(listing_cards)
+        Ok(bounty_cards)
     }
 
     pub async fn all_rejected_for_user(
@@ -1085,44 +1085,44 @@ OFFSET ?
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCard>, sqlx::Error> {
+    ) -> Result<Vec<BountyCard>, sqlx::Error> {
         // Example query for this kind of join/group by: https://stackoverflow.com/a/63037790/1639564
         // Other example query: https://stackoverflow.com/a/13698334/1639564
         // TODO: change WHERE condition to use dynamically calculated remaining quantity
         // based on number of awarded cases.
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let listing_cards =
+        let bounty_cards =
             sqlx::query!("
 select
- listings.id, listings.public_id, listings.user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- listings
+ bounties
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 INNER JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
- not listings.approved
+ not bounties.approved
 AND
- listings.reviewed
+ bounties.reviewed
 AND
  users.id = ?
 GROUP BY
- listings.id
-ORDER BY listings.created_time_ms DESC
+ bounties.id
+ORDER BY bounties.created_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;", user_id, limit, offset)
                 .fetch(&mut **db)
             .map_ok(|r| {
-                let l = Listing {
+                let l = Bounty {
                     id: Some(r.id.unwrap().try_into().unwrap()),
                     public_id: r.public_id.unwrap(),
                     user_id: r.user_id.unwrap().try_into().unwrap(),
@@ -1137,10 +1137,10 @@ OFFSET ?
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                 };
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -1148,8 +1148,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                ListingCard {
-                    listing: l,
+                BountyCard {
+                    bounty: l,
                     image: i,
                     user: u.unwrap(),
                 }
@@ -1157,7 +1157,7 @@ OFFSET ?
                 .try_collect::<Vec<_>>()
                 .await?;
 
-        Ok(listing_cards)
+        Ok(bounty_cards)
     }
 
     pub async fn all_deactivated_for_user(
@@ -1165,40 +1165,40 @@ OFFSET ?
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCard>, sqlx::Error> {
+    ) -> Result<Vec<BountyCard>, sqlx::Error> {
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let listing_cards =
+        let bounty_cards =
             sqlx::query!("
 select
- listings.id, listings.public_id, listings.user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- listings
+ bounties
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 INNER JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
- listings.approved
+ bounties.approved
 AND
- (listings.deactivated_by_seller OR listings.deactivated_by_admin)
+ (bounties.deactivated_by_seller OR bounties.deactivated_by_admin)
 AND
  users.id = ?
 GROUP BY
- listings.id
-ORDER BY listings.created_time_ms DESC
+ bounties.id
+ORDER BY bounties.created_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;", user_id, limit, offset)
                 .fetch(&mut **db)
             .map_ok(|r| {
-                let l = Listing {
+                let l = Bounty {
                     id: Some(r.id.unwrap().try_into().unwrap()),
                     public_id: r.public_id.unwrap(),
                     user_id: r.user_id.unwrap().try_into().unwrap(),
@@ -1213,10 +1213,10 @@ OFFSET ?
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                 };
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -1224,8 +1224,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                ListingCard {
-                    listing: l,
+                BountyCard {
+                    bounty: l,
                     image: i,
                     user: u.unwrap(),
                 }
@@ -1233,7 +1233,7 @@ OFFSET ?
                 .try_collect::<Vec<_>>()
                 .await?;
 
-        Ok(listing_cards)
+        Ok(bounty_cards)
     }
 
     pub async fn all_active_for_user(
@@ -1241,46 +1241,46 @@ OFFSET ?
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCard>, sqlx::Error> {
+    ) -> Result<Vec<BountyCard>, sqlx::Error> {
         // Example query for this kind of join/group by: https://stackoverflow.com/a/63037790/1639564
         // Other example query: https://stackoverflow.com/a/13698334/1639564
         // TODO: change WHERE condition to use dynamically calculated remaining quantity
         // based on number of awarded cases.
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let listing_cards =
+        let bounty_cards =
             sqlx::query!("
 select
- listings.id, listings.public_id, listings.user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- listings
+ bounties
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 INNER JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
- listings.approved
+ bounties.approved
 AND
- listings.reviewed
+ bounties.reviewed
 AND
- NOT (listings.deactivated_by_seller OR listings.deactivated_by_admin)
+ NOT (bounties.deactivated_by_seller OR bounties.deactivated_by_admin)
 AND
  users.id = ?
 GROUP BY
- listings.id
-ORDER BY listings.created_time_ms DESC
+ bounties.id
+ORDER BY bounties.created_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;", user_id, limit, offset)
                 .fetch(&mut **db)
             .map_ok(|r| {
-                let l = Listing {
+                let l = Bounty {
                     id: Some(r.id.unwrap().try_into().unwrap()),
                     public_id: r.public_id.unwrap(),
                     user_id: r.user_id.unwrap().try_into().unwrap(),
@@ -1295,10 +1295,10 @@ OFFSET ?
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                 };
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -1306,8 +1306,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                ListingCard {
-                    listing: l,
+                BountyCard {
+                    bounty: l,
                     image: i,
                     user: u.unwrap(),
                 }
@@ -1315,7 +1315,7 @@ OFFSET ?
                 .try_collect::<Vec<_>>()
                 .await?;
 
-        Ok(listing_cards)
+        Ok(bounty_cards)
     }
 
     pub async fn all_active_for_search_text(
@@ -1323,7 +1323,7 @@ OFFSET ?
         search_text: &str,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCard>, sqlx::Error> {
+    ) -> Result<Vec<BountyCard>, sqlx::Error> {
         // Example query for this kind of join/group by: https://stackoverflow.com/a/63037790/1639564
         // Other example query: https://stackoverflow.com/a/13698334/1639564
         // TODO: change WHERE condition to use dynamically calculated remaining quantity
@@ -1332,45 +1332,45 @@ OFFSET ?
         let limit = page_size;
         // let uppercase_search_term = search_text.to_owned().to_ascii_uppercase();
         let wildcard_search_term = format!("%{}%", search_text.to_ascii_uppercase());
-        let listing_cards =
+        let bounty_cards =
             sqlx::query!("
 select
- listings.id, listings.public_id, listings.user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- listings
+ bounties
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 INNER JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 INNER JOIN
  useraccounts
 ON
- listings.user_id = useraccounts.user_id
+ bounties.user_id = useraccounts.user_id
 AND
  NOT useraccounts.disabled
 WHERE
- listings.approved
+ bounties.approved
 AND
- listings.reviewed
+ bounties.reviewed
 AND
- NOT (listings.deactivated_by_seller OR listings.deactivated_by_admin)
+ NOT (bounties.deactivated_by_seller OR bounties.deactivated_by_admin)
 AND
- (UPPER(listings.title) like ? OR UPPER(listings.description) like ?)
+ (UPPER(bounties.title) like ? OR UPPER(bounties.description) like ?)
 GROUP BY
- listings.id
-ORDER BY listings.created_time_ms DESC
+ bounties.id
+ORDER BY bounties.created_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;", wildcard_search_term, wildcard_search_term, limit, offset)
                 .fetch(&mut **db)
             .map_ok(|r| {
-                let l = Listing {
+                let l = Bounty {
                     id: Some(r.id.unwrap().try_into().unwrap()),
                     public_id: r.public_id.unwrap(),
                     user_id: r.user_id.unwrap().try_into().unwrap(),
@@ -1385,10 +1385,10 @@ OFFSET ?
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                 };
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -1396,8 +1396,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                ListingCard {
-                    listing: l,
+                BountyCard {
+                    bounty: l,
                     image: i,
                     user: u.unwrap(),
                 }
@@ -1405,18 +1405,18 @@ OFFSET ?
                 .try_collect::<Vec<_>>()
                 .await?;
 
-        Ok(listing_cards)
+        Ok(bounty_cards)
     }
 }
 
-impl ListingCardDisplay {
-    fn listing_card_to_display(card: &ListingCard) -> ListingCardDisplay {
-        ListingCardDisplay {
-            listing: card.listing.clone(),
-            image: card.image.clone().map(|image| ListingImageDisplay {
+impl BountyCardDisplay {
+    fn bounty_card_to_display(card: &BountyCard) -> BountyCardDisplay {
+        BountyCardDisplay {
+            bounty: card.bounty.clone(),
+            image: card.image.clone().map(|image| BountyImageDisplay {
                 id: image.id,
                 public_id: image.public_id,
-                listing_id: image.listing_id,
+                bounty_id: image.bounty_id,
                 image_data_base64: util::to_base64(&image.image_data),
                 is_primary: image.is_primary,
             }),
@@ -1428,42 +1428,42 @@ impl ListingCardDisplay {
         db: &mut Connection<Db>,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCardDisplay>, sqlx::Error> {
-        let listing_cards = ListingCard::all_active(db, page_size, page_num).await?;
-        let listing_card_displays = listing_cards
+    ) -> Result<Vec<BountyCardDisplay>, sqlx::Error> {
+        let bounty_cards = BountyCard::all_active(db, page_size, page_num).await?;
+        let bounty_card_displays = bounty_cards
             .iter()
-            .map(ListingCardDisplay::listing_card_to_display)
+            .map(BountyCardDisplay::bounty_card_to_display)
             .collect::<Vec<_>>();
 
-        Ok(listing_card_displays)
+        Ok(bounty_card_displays)
     }
 
     pub async fn all_deactivated(
         db: &mut Connection<Db>,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCardDisplay>, sqlx::Error> {
-        let listing_cards = ListingCard::all_deactivated(db, page_size, page_num).await?;
-        let listing_card_displays = listing_cards
+    ) -> Result<Vec<BountyCardDisplay>, sqlx::Error> {
+        let bounty_cards = BountyCard::all_deactivated(db, page_size, page_num).await?;
+        let bounty_card_displays = bounty_cards
             .iter()
-            .map(ListingCardDisplay::listing_card_to_display)
+            .map(BountyCardDisplay::bounty_card_to_display)
             .collect::<Vec<_>>();
 
-        Ok(listing_card_displays)
+        Ok(bounty_card_displays)
     }
 
     pub async fn all_pending(
         db: &mut Connection<Db>,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCardDisplay>, sqlx::Error> {
-        let listing_cards = ListingCard::all_pending(db, page_size, page_num).await?;
-        let listing_card_displays = listing_cards
+    ) -> Result<Vec<BountyCardDisplay>, sqlx::Error> {
+        let bounty_cards = BountyCard::all_pending(db, page_size, page_num).await?;
+        let bounty_card_displays = bounty_cards
             .iter()
-            .map(ListingCardDisplay::listing_card_to_display)
+            .map(BountyCardDisplay::bounty_card_to_display)
             .collect::<Vec<_>>();
 
-        Ok(listing_card_displays)
+        Ok(bounty_card_displays)
     }
 
     pub async fn all_unsubmitted_for_user(
@@ -1471,15 +1471,15 @@ impl ListingCardDisplay {
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCardDisplay>, sqlx::Error> {
-        let listing_cards =
-            ListingCard::all_unsubmitted_for_user(db, user_id, page_size, page_num).await?;
-        let listing_card_displays = listing_cards
+    ) -> Result<Vec<BountyCardDisplay>, sqlx::Error> {
+        let bounty_cards =
+            BountyCard::all_unsubmitted_for_user(db, user_id, page_size, page_num).await?;
+        let bounty_card_displays = bounty_cards
             .iter()
-            .map(ListingCardDisplay::listing_card_to_display)
+            .map(BountyCardDisplay::bounty_card_to_display)
             .collect::<Vec<_>>();
 
-        Ok(listing_card_displays)
+        Ok(bounty_card_displays)
     }
 
     pub async fn all_pending_for_user(
@@ -1487,15 +1487,15 @@ impl ListingCardDisplay {
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCardDisplay>, sqlx::Error> {
-        let listing_cards =
-            ListingCard::all_pending_for_user(db, user_id, page_size, page_num).await?;
-        let listing_card_displays = listing_cards
+    ) -> Result<Vec<BountyCardDisplay>, sqlx::Error> {
+        let bounty_cards =
+            BountyCard::all_pending_for_user(db, user_id, page_size, page_num).await?;
+        let bounty_card_displays = bounty_cards
             .iter()
-            .map(ListingCardDisplay::listing_card_to_display)
+            .map(BountyCardDisplay::bounty_card_to_display)
             .collect::<Vec<_>>();
 
-        Ok(listing_card_displays)
+        Ok(bounty_card_displays)
     }
 
     pub async fn all_rejected_for_user(
@@ -1503,15 +1503,15 @@ impl ListingCardDisplay {
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCardDisplay>, sqlx::Error> {
-        let listing_cards =
-            ListingCard::all_rejected_for_user(db, user_id, page_size, page_num).await?;
-        let listing_card_displays = listing_cards
+    ) -> Result<Vec<BountyCardDisplay>, sqlx::Error> {
+        let bounty_cards =
+            BountyCard::all_rejected_for_user(db, user_id, page_size, page_num).await?;
+        let bounty_card_displays = bounty_cards
             .iter()
-            .map(ListingCardDisplay::listing_card_to_display)
+            .map(BountyCardDisplay::bounty_card_to_display)
             .collect::<Vec<_>>();
 
-        Ok(listing_card_displays)
+        Ok(bounty_card_displays)
     }
 
     pub async fn all_deactivated_for_user(
@@ -1519,15 +1519,15 @@ impl ListingCardDisplay {
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCardDisplay>, sqlx::Error> {
-        let listing_cards =
-            ListingCard::all_deactivated_for_user(db, user_id, page_size, page_num).await?;
-        let listing_card_displays = listing_cards
+    ) -> Result<Vec<BountyCardDisplay>, sqlx::Error> {
+        let bounty_cards =
+            BountyCard::all_deactivated_for_user(db, user_id, page_size, page_num).await?;
+        let bounty_card_displays = bounty_cards
             .iter()
-            .map(ListingCardDisplay::listing_card_to_display)
+            .map(BountyCardDisplay::bounty_card_to_display)
             .collect::<Vec<_>>();
 
-        Ok(listing_card_displays)
+        Ok(bounty_card_displays)
     }
 
     pub async fn all_active_for_user(
@@ -1535,15 +1535,15 @@ impl ListingCardDisplay {
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCardDisplay>, sqlx::Error> {
-        let listing_cards =
-            ListingCard::all_active_for_user(db, user_id, page_size, page_num).await?;
-        let listing_card_displays = listing_cards
+    ) -> Result<Vec<BountyCardDisplay>, sqlx::Error> {
+        let bounty_cards =
+            BountyCard::all_active_for_user(db, user_id, page_size, page_num).await?;
+        let bounty_card_displays = bounty_cards
             .iter()
-            .map(ListingCardDisplay::listing_card_to_display)
+            .map(BountyCardDisplay::bounty_card_to_display)
             .collect::<Vec<_>>();
 
-        Ok(listing_card_displays)
+        Ok(bounty_card_displays)
     }
 
     pub async fn all_active_for_search_text(
@@ -1551,15 +1551,15 @@ impl ListingCardDisplay {
         search_text: &str,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<ListingCardDisplay>, sqlx::Error> {
-        let listing_cards =
-            ListingCard::all_active_for_search_text(db, search_text, page_size, page_num).await?;
-        let listing_card_displays = listing_cards
+    ) -> Result<Vec<BountyCardDisplay>, sqlx::Error> {
+        let bounty_cards =
+            BountyCard::all_active_for_search_text(db, search_text, page_size, page_num).await?;
+        let bounty_card_displays = bounty_cards
             .iter()
-            .map(ListingCardDisplay::listing_card_to_display)
+            .map(BountyCardDisplay::bounty_card_to_display)
             .collect::<Vec<_>>();
 
-        Ok(listing_card_displays)
+        Ok(bounty_card_displays)
     }
 }
 
@@ -1767,12 +1767,12 @@ impl Order {
             .map_err(|_| "failed to begin transaction.")?;
 
         let insert_result = sqlx::query!(
-            "INSERT INTO orders (public_id, buyer_user_id, seller_user_id, quantity, listing_id, case_details, amount_owed_sat, seller_credit_sat, paid, awarded, canceled_by_seller, canceled_by_buyer, reviewed, review_text, review_rating, invoice_hash, invoice_payment_request, created_time_ms, payment_time_ms, review_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO orders (public_id, buyer_user_id, seller_user_id, quantity, bounty_id, case_details, amount_owed_sat, seller_credit_sat, paid, awarded, canceled_by_seller, canceled_by_buyer, reviewed, review_text, review_rating, invoice_hash, invoice_payment_request, created_time_ms, payment_time_ms, review_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             order.public_id,
             order.buyer_user_id,
             order.seller_user_id,
             order.quantity,
-            order.listing_id,
+            order.bounty_id,
             order.case_details,
             amount_owed_sat,
             seller_credit_sat,
@@ -1870,7 +1870,7 @@ AND
                 quantity: r.quantity.try_into().unwrap(),
                 buyer_user_id: r.buyer_user_id.try_into().unwrap(),
                 seller_user_id: r.seller_user_id.try_into().unwrap(),
-                listing_id: r.listing_id.try_into().unwrap(),
+                bounty_id: r.bounty_id.try_into().unwrap(),
                 case_details: r.case_details,
                 amount_owed_sat: r.amount_owed_sat.try_into().unwrap(),
                 seller_credit_sat: r.seller_credit_sat.try_into().unwrap(),
@@ -1904,7 +1904,7 @@ AND
                 quantity: r.quantity.try_into().unwrap(),
                 buyer_user_id: r.buyer_user_id.try_into().unwrap(),
                 seller_user_id: r.seller_user_id.try_into().unwrap(),
-                listing_id: r.listing_id.try_into().unwrap(),
+                bounty_id: r.bounty_id.try_into().unwrap(),
                 case_details: r.case_details,
                 amount_owed_sat: r.amount_owed_sat.try_into().unwrap(),
                 seller_credit_sat: r.seller_credit_sat.try_into().unwrap(),
@@ -1938,7 +1938,7 @@ AND
                 quantity: r.quantity.try_into().unwrap(),
                 buyer_user_id: r.buyer_user_id.try_into().unwrap(),
                 seller_user_id: r.seller_user_id.try_into().unwrap(),
-                listing_id: r.listing_id.try_into().unwrap(),
+                bounty_id: r.bounty_id.try_into().unwrap(),
                 case_details: r.case_details,
                 amount_owed_sat: r.amount_owed_sat.try_into().unwrap(),
                 seller_credit_sat: r.seller_credit_sat.try_into().unwrap(),
@@ -1985,7 +1985,7 @@ AND
             quantity: r.quantity.try_into().unwrap(),
             buyer_user_id: r.buyer_user_id.try_into().unwrap(),
             seller_user_id: r.seller_user_id.try_into().unwrap(),
-            listing_id: r.listing_id.try_into().unwrap(),
+            bounty_id: r.bounty_id.try_into().unwrap(),
             case_details: r.case_details,
             amount_owed_sat: r.amount_owed_sat.try_into().unwrap(),
             seller_credit_sat: r.seller_credit_sat.try_into().unwrap(),
@@ -2327,23 +2327,23 @@ impl OrderCard {
         let orders = sqlx::query!(
             "
 select
- orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.listing_id as order_listing_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, listings.id, listings.public_id as listing_public_id, listings.user_id as listing_user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms as listing_created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  orders
 LEFT JOIN
- listings
+ bounties
 ON
- orders.listing_id = listings.id
+ orders.bounty_id = bounties.id
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 LEFT JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
  not orders.paid
 AND
@@ -2366,7 +2366,7 @@ OFFSET ?
                     quantity: r.order_quantity.unwrap().try_into().unwrap(),
                     buyer_user_id: r.order_buyer_user_id.unwrap().try_into().unwrap(),
                     seller_user_id: r.order_seller_user_id.unwrap().try_into().unwrap(),
-                    listing_id: r.order_listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.order_bounty_id.unwrap().try_into().unwrap(),
                     case_details: r.case_details.unwrap(),
                     amount_owed_sat: r.amount_owed_sat.unwrap().try_into().unwrap(),
                     seller_credit_sat: r.seller_credit_sat.unwrap().try_into().unwrap(),
@@ -2383,10 +2383,10 @@ OFFSET ?
                     payment_time_ms: r.payment_time_ms.unwrap().try_into().unwrap(),
                     review_time_ms: r.review_time_ms.unwrap().try_into().unwrap(),
                 };
-                let l = r.id.map(|listing_id| Listing {
-                    id: Some(listing_id.try_into().unwrap()),
-                    public_id: r.listing_public_id.unwrap(),
-                    user_id: r.listing_user_id.unwrap().try_into().unwrap(),
+                let l = r.id.map(|bounty_id| Bounty {
+                    id: Some(bounty_id.try_into().unwrap()),
+                    public_id: r.bounty_public_id.unwrap(),
+                    user_id: r.bounty_user_id.unwrap().try_into().unwrap(),
                     title: r.title.unwrap(),
                     description: r.description.unwrap(),
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
@@ -2396,12 +2396,12 @@ OFFSET ?
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
-                    created_time_ms: r.listing_created_time_ms.unwrap().try_into().unwrap(),
+                    created_time_ms: r.bounty_created_time_ms.unwrap().try_into().unwrap(),
                 });
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -2411,7 +2411,7 @@ OFFSET ?
                 });
                 OrderCard {
                     order: o,
-                    listing: l,
+                    bounty: l,
                     image: i,
                     user: u,
                 }
@@ -2433,23 +2433,23 @@ OFFSET ?
         let orders = sqlx::query!(
             "
 select
- orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.listing_id as order_listing_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, listings.id, listings.public_id as listing_public_id, listings.user_id as listing_user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms as listing_created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  orders
 LEFT JOIN
- listings
+ bounties
 ON
- orders.listing_id = listings.id
+ orders.bounty_id = bounties.id
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 LEFT JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
  orders.paid
 AND
@@ -2472,7 +2472,7 @@ OFFSET ?
                     quantity: r.order_quantity.unwrap().try_into().unwrap(),
                     buyer_user_id: r.order_buyer_user_id.unwrap().try_into().unwrap(),
                     seller_user_id: r.order_seller_user_id.unwrap().try_into().unwrap(),
-                    listing_id: r.order_listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.order_bounty_id.unwrap().try_into().unwrap(),
                     case_details: r.case_details.unwrap(),
                     amount_owed_sat: r.amount_owed_sat.unwrap().try_into().unwrap(),
                     seller_credit_sat: r.seller_credit_sat.unwrap().try_into().unwrap(),
@@ -2489,10 +2489,10 @@ OFFSET ?
                     payment_time_ms: r.payment_time_ms.unwrap().try_into().unwrap(),
                     review_time_ms: r.review_time_ms.unwrap().try_into().unwrap(),
                 };
-                let l = r.id.map(|listing_id| Listing {
-                    id: Some(listing_id.try_into().unwrap()),
-                    public_id: r.listing_public_id.unwrap(),
-                    user_id: r.listing_user_id.unwrap().try_into().unwrap(),
+                let l = r.id.map(|bounty_id| Bounty {
+                    id: Some(bounty_id.try_into().unwrap()),
+                    public_id: r.bounty_public_id.unwrap(),
+                    user_id: r.bounty_user_id.unwrap().try_into().unwrap(),
                     title: r.title.unwrap(),
                     description: r.description.unwrap(),
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
@@ -2502,12 +2502,12 @@ OFFSET ?
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
-                    created_time_ms: r.listing_created_time_ms.unwrap().try_into().unwrap(),
+                    created_time_ms: r.bounty_created_time_ms.unwrap().try_into().unwrap(),
                 });
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -2517,7 +2517,7 @@ OFFSET ?
                 });
                 OrderCard {
                     order: o,
-                    listing: l,
+                    bounty: l,
                     image: i,
                     user: u,
                 }
@@ -2539,23 +2539,23 @@ OFFSET ?
         let orders = sqlx::query!(
             "
 select
- orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.listing_id as order_listing_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, listings.id, listings.public_id as listing_public_id, listings.user_id as listing_user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms as listing_created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  orders
 LEFT JOIN
- listings
+ bounties
 ON
- orders.listing_id = listings.id
+ orders.bounty_id = bounties.id
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 LEFT JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
  orders.awarded
 AND
@@ -2578,7 +2578,7 @@ OFFSET ?
                     quantity: r.order_quantity.unwrap().try_into().unwrap(),
                     buyer_user_id: r.order_buyer_user_id.unwrap().try_into().unwrap(),
                     seller_user_id: r.order_seller_user_id.unwrap().try_into().unwrap(),
-                    listing_id: r.order_listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.order_bounty_id.unwrap().try_into().unwrap(),
                     case_details: r.case_details.unwrap(),
                     amount_owed_sat: r.amount_owed_sat.unwrap().try_into().unwrap(),
                     seller_credit_sat: r.seller_credit_sat.unwrap().try_into().unwrap(),
@@ -2595,10 +2595,10 @@ OFFSET ?
                     payment_time_ms: r.payment_time_ms.unwrap().try_into().unwrap(),
                     review_time_ms: r.review_time_ms.unwrap().try_into().unwrap(),
                 };
-                let l = r.id.map(|listing_id| Listing {
-                    id: Some(listing_id.try_into().unwrap()),
-                    public_id: r.listing_public_id.unwrap(),
-                    user_id: r.listing_user_id.unwrap().try_into().unwrap(),
+                let l = r.id.map(|bounty_id| Bounty {
+                    id: Some(bounty_id.try_into().unwrap()),
+                    public_id: r.bounty_public_id.unwrap(),
+                    user_id: r.bounty_user_id.unwrap().try_into().unwrap(),
                     title: r.title.unwrap(),
                     description: r.description.unwrap(),
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
@@ -2608,12 +2608,12 @@ OFFSET ?
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
-                    created_time_ms: r.listing_created_time_ms.unwrap().try_into().unwrap(),
+                    created_time_ms: r.bounty_created_time_ms.unwrap().try_into().unwrap(),
                 });
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -2623,7 +2623,7 @@ OFFSET ?
                 });
                 OrderCard {
                     order: o,
-                    listing: l,
+                    bounty: l,
                     image: i,
                     user: u,
                 }
@@ -2645,23 +2645,23 @@ OFFSET ?
         let orders = sqlx::query!(
             "
 select
- orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.listing_id as order_listing_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, listings.id, listings.public_id as listing_public_id, listings.user_id as listing_user_id, listings.title, listings.description, listings.price_sat, listings.fee_rate_basis_points, listings.submitted, listings.reviewed, listings.approved, listings.deactivated_by_seller, listings.deactivated_by_admin, listings.created_time_ms as listing_created_time_ms, listingimages.id as image_id, listingimages.public_id as image_public_id, listingimages.listing_id, listingimages.image_data, listingimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  orders
 LEFT JOIN
- listings
+ bounties
 ON
- orders.listing_id = listings.id
+ orders.bounty_id = bounties.id
 LEFT JOIN
- listingimages
+ bountyimages
 ON
- listings.id = listingimages.listing_id
+ bounties.id = bountyimages.bounty_id
 AND
- listingimages.is_primary = (SELECT MAX(is_primary) FROM listingimages WHERE listing_id = listings.id)
+ bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)
 LEFT JOIN
  users
 ON
- listings.user_id = users.id
+ bounties.user_id = users.id
 WHERE
  orders.paid
 AND
@@ -2687,7 +2687,7 @@ OFFSET ?
                     quantity: r.order_quantity.unwrap().try_into().unwrap(),
                     buyer_user_id: r.order_buyer_user_id.unwrap().try_into().unwrap(),
                     seller_user_id: r.order_seller_user_id.unwrap().try_into().unwrap(),
-                    listing_id: r.order_listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.order_bounty_id.unwrap().try_into().unwrap(),
                     case_details: r.case_details.unwrap(),
                     amount_owed_sat: r.amount_owed_sat.unwrap().try_into().unwrap(),
                     seller_credit_sat: r.seller_credit_sat.unwrap().try_into().unwrap(),
@@ -2704,10 +2704,10 @@ OFFSET ?
                     payment_time_ms: r.payment_time_ms.unwrap().try_into().unwrap(),
                     review_time_ms: r.review_time_ms.unwrap().try_into().unwrap(),
                 };
-                let l = r.id.map(|listing_id| Listing {
-                    id: Some(listing_id.try_into().unwrap()),
-                    public_id: r.listing_public_id.unwrap(),
-                    user_id: r.listing_user_id.unwrap().try_into().unwrap(),
+                let l = r.id.map(|bounty_id| Bounty {
+                    id: Some(bounty_id.try_into().unwrap()),
+                    public_id: r.bounty_public_id.unwrap(),
+                    user_id: r.bounty_user_id.unwrap().try_into().unwrap(),
                     title: r.title.unwrap(),
                     description: r.description.unwrap(),
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
@@ -2717,12 +2717,12 @@ OFFSET ?
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
-                    created_time_ms: r.listing_created_time_ms.unwrap().try_into().unwrap(),
+                    created_time_ms: r.bounty_created_time_ms.unwrap().try_into().unwrap(),
                 });
-                let i = r.image_id.map(|image_id| ListingImage {
+                let i = r.image_id.map(|image_id| BountyImage {
                     id: Some(image_id.try_into().unwrap()),
                     public_id: r.image_public_id.unwrap(),
-                    listing_id: r.listing_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.bounty_id.unwrap().try_into().unwrap(),
                     image_data: r.image_data.unwrap(),
                     is_primary: r.is_primary.unwrap(),
                 });
@@ -2732,7 +2732,7 @@ OFFSET ?
                 });
                 OrderCard {
                     order: o,
-                    listing: l,
+                    bounty: l,
                     image: i,
                     user: u,
                 }
@@ -2984,19 +2984,19 @@ WHERE
     //         let account_balance_result = sqlx::query!("
     // SELECT SUM(data.amount_change_sat) as account_balance, data.user_id as user_id
     // FROM
-    // (select listings.user_id as user_id, orders.seller_credit_sat as amount_change_sat, 'received_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+    // (select bounties.user_id as user_id, orders.seller_credit_sat as amount_change_sat, 'received_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
     // from
     //  orders
     // LEFT JOIN
-    //  listings
+    //  bounties
     // ON
-    //  orders.listing_id = listings.id
+    //  orders.bounty_id = bounties.id
     // WHERE
     //  orders.paid
     // AND
     //  orders.awarded
     // AND
-    //  listings.user_id = ?
+    //  bounties.user_id = ?
     // UNION ALL
     // select orders.user_id as user_id, orders.amount_owed_sat as amount_change_sat, 'refunded_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
     // from
@@ -3195,9 +3195,9 @@ WHERE
 
 impl AdminInfo {
     pub async fn admin_info(db: &mut Connection<Db>) -> Result<AdminInfo, sqlx::Error> {
-        let num_pending_listings = Listing::num_pending(db).await?;
+        let num_pending_bounties = Bounty::num_pending(db).await?;
         Ok(AdminInfo {
-            num_pending_listings,
+            num_pending_bounties,
         })
     }
 }
@@ -3524,28 +3524,28 @@ WHERE id = ?
 
         sqlx::query!(
             "
-DELETE FROM listingimages
+DELETE FROM bountyimages
 WHERE
- listing_id IN
-(SELECT listings.id FROM listings
+ bounty_id IN
+(SELECT bounties.id FROM bounties
 WHERE user_id = ?);
 ;",
             user_account.user_id,
         )
         .execute(&mut *tx)
         .await
-        .map_err(|_| "failed to delete user listing images.")?;
+        .map_err(|_| "failed to delete user bounty images.")?;
 
         sqlx::query!(
             "
-DELETE FROM listings
+DELETE FROM bounties
 WHERE user_id = ?
 ;",
             user_account.user_id,
         )
         .execute(&mut *tx)
         .await
-        .map_err(|_| "failed to delete user listings.")?;
+        .map_err(|_| "failed to delete user bounties.")?;
 
         if activation_bond_amount_sat - amount_sat < 0 {
             return Err("Insufficient funds for deactivation.".to_string());

@@ -27,17 +27,17 @@
     <br>
     <a href="my_processing_orders">My Processing Orders</a>
     <br>
-    <a href="/new_listing">Add New Listing</a>
+    <a href="/new_bounty">Add New Bounty</a>
     <br>
-    <a href="my_unsubmitted_listings">My Unsubmitted Listings</a>
+    <a href="my_unsubmitted_bounties">My Unsubmitted Bounties</a>
     <br>
-    <a href="my_pending_listings">My Pending Listings</a>
+    <a href="my_pending_bounties">My Pending Bounties</a>
     <br>
-    <a href="my_rejected_listings">My Rejected Listings</a>
+    <a href="my_rejected_bounties">My Rejected Bounties</a>
     <br>
-    <a href="my_active_listings">My Active Listings</a>
+    <a href="my_active_bounties">My Active Bounties</a>
     <br>
-    <a href="my_deactivated_listings">My Deactivated Listings</a>
+    <a href="my_deactivated_bounties">My Deactivated Bounties</a>
   </div>
 </div>
 

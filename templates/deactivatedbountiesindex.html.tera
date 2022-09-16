@@ -1,17 +1,17 @@
 {% extends "base" %}
 {% block body %}
 
-<br>
+<a href="/new_bounty">Add New Bounty</a>
 
   <div class="container">
     <p><!--Nothing to see here --></p>
 
     <div class="row">
 
-      <h3>Review Pending Listings</h3>
+      <h3>Deactivated Bounties</h3>
 
       <div class="twelve columns">
-	{% include "listingtablepage" %}
+	{% include "bountytablepage" %}
       </div>
     </div>
   </div>

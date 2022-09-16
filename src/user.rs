@@ -1,6 +1,6 @@
 use crate::base::BaseContext;
 use crate::db::Db;
-use crate::models::{ListingCardDisplay, Order, RocketAuthUser, UserAccount};
+use crate::models::{BountyCardDisplay, Order, RocketAuthUser, UserAccount};
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
 use rocket::response::Flash;
@@ -21,7 +21,7 @@ struct Context {
     visited_user: RocketAuthUser,
     visited_user_account: UserAccount,
     weighted_average_rating: f32,
-    listing_cards: Vec<ListingCardDisplay>,
+    bounty_cards: Vec<BountyCardDisplay>,
     admin_user: Option<AdminUser>,
     page_num: u32,
 }
@@ -45,14 +45,14 @@ impl Context {
             .await
             .map_err(|_| "failed to get user account.")?;
         let page_num = maybe_page_num.unwrap_or(1);
-        let listing_cards = ListingCardDisplay::all_active_for_user(
+        let bounty_cards = BountyCardDisplay::all_active_for_user(
             &mut db,
             visited_user.id.unwrap(),
             PAGE_SIZE,
             page_num,
         )
         .await
-        .map_err(|_| "failed to get approved listings.")?;
+        .map_err(|_| "failed to get approved bounties.")?;
         let seller_info = Order::seller_info_for_user(&mut db, visited_user.id.unwrap())
             .await
             .map_err(|_| "failed to get weighted average rating for user.")?;
@@ -63,7 +63,7 @@ impl Context {
             visited_user,
             visited_user_account,
             weighted_average_rating,
-            listing_cards,
+            bounty_cards,
             admin_user,
             page_num,
         })

@@ -83,6 +83,6 @@ async fn index(
 pub fn about_stage() -> AdHoc {
     AdHoc::on_ignite("About Stage", |rocket| async {
         rocket.mount("/about", routes![index])
-        // .mount("/listing", routes![new])
+        // .mount("/bounty", routes![new])
     })
 }

@@ -1,7 +1,7 @@
 {% extends "base" %}
 {% block body %}
 
-{% if listing_display %}
+{% if bounty_display %}
 
 
 <div class="container">
@@ -18,16 +18,16 @@
 
     <h3>Prepare Order</h3>
 
-    <p><a href="/listing/{{ listing_display.listing.public_id }}">Back to Listing</a></p>
+    <p><a href="/bounty/{{ bounty_display.bounty.public_id }}">Back to Bounty</a></p>
 
-    <p><b>Listing</b>: {{ listing_display.listing.title }} ({{ listing_display.listing.price_sat }} sats)</p>
+    <p><b>Bounty</b>: {{ bounty_display.bounty.title }} ({{ bounty_display.bounty.price_sat }} sats)</p>
     <p><b>Quantity</b>: {{ quantity }}</p>
 
-    <p><b>Total Price</b>: {{ quantity }} x ({{ listing_display.listing.price_sat }} sats) = <b>{{ quantity * listing_display.listing.price_sat }} sats</b></p>
+    <p><b>Total Price</b>: {{ quantity }} x ({{ bounty_display.bounty.price_sat }} sats) = <b>{{ quantity * bounty_display.bounty.price_sat }} sats</b></p>
 
     <p><b>Seller PGP Key</b>: {% if seller_user_settings.pgp_key %}<pre>{{ seller_user_settings.pgp_key }}</pre>{% else %}Not set{% endif %}</p>
 
-    <form action="/prepare_order/{{ listing_display.listing.public_id }}/new" method="post">
+    <form action="/prepare_order/{{ bounty_display.bounty.public_id }}/new" method="post">
       <input type="hidden"
              name="quantity" id="quantity" value="{{ quantity }}" />
       <label for="case_details">Describe your case for why you deserve the bounty reward. Use markdown syntax for links and images.</label>

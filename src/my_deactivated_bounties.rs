@@ -1,6 +1,6 @@
 use crate::base::BaseContext;
 use crate::db::Db;
-use crate::models::ListingCardDisplay;
+use crate::models::BountyCardDisplay;
 use crate::user_account::ActiveUser;
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
@@ -16,7 +16,7 @@ const PAGE_SIZE: u32 = 10;
 struct Context {
     base_context: BaseContext,
     flash: Option<(String, String)>,
-    listing_cards: Vec<ListingCardDisplay>,
+    bounty_cards: Vec<BountyCardDisplay>,
     page_num: u32,
 }
 
@@ -32,14 +32,14 @@ impl Context {
             .await
             .map_err(|_| "failed to get base template.")?;
         let page_num = maybe_page_num.unwrap_or(1);
-        let listing_cards =
-            ListingCardDisplay::all_active_for_user(&mut db, user.id, PAGE_SIZE, page_num)
+        let bounty_cards =
+            BountyCardDisplay::all_deactivated_for_user(&mut db, user.id, PAGE_SIZE, page_num)
                 .await
-                .map_err(|_| "failed to get approved listings.")?;
+                .map_err(|_| "failed to get deactivated bounties.")?;
         Ok(Context {
             base_context,
             flash,
-            listing_cards,
+            bounty_cards,
             page_num,
         })
     }
@@ -57,12 +57,11 @@ async fn index(
     let context = Context::raw(flash, db, page_num, active_user.user, admin_user)
         .await
         .map_err(|_| "failed to get template context.")?;
-    Ok(Template::render("myactivelistings", context))
+    Ok(Template::render("mydeactivatedbounties", context))
 }
 
-pub fn my_active_listings_stage() -> AdHoc {
-    AdHoc::on_ignite("My Active Listings Stage", |rocket| async {
-        rocket.mount("/my_active_listings", routes![index])
-        // .mount("/listing", routes![new])
+pub fn my_deactivated_bounties_stage() -> AdHoc {
+    AdHoc::on_ignite("My Deactivated bounties Stage", |rocket| async {
+        rocket.mount("/my_deactivated_bounties", routes![index])
     })
 }

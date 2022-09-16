@@ -1,7 +1,7 @@
 use crate::base::BaseContext;
 use crate::db::Db;
 use crate::models::AdminSettings;
-use crate::models::{InitialListingInfo, Listing};
+use crate::models::{InitialBountyInfo, Bounty};
 use crate::user_account::ActiveUser;
 use crate::util;
 use rocket::fairing::AdHoc;
@@ -13,7 +13,7 @@ use rocket_auth::{AdminUser, User};
 use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
 
-const MAX_UNAPPROVED_LISTINGS: u32 = 5;
+const MAX_UNAPPROVED_BOUNTIES: u32 = 5;
 
 #[derive(Debug, Serialize)]
 #[serde(crate = "rocket::serde")]
@@ -44,28 +44,28 @@ impl Context {
     }
 }
 
-#[post("/", data = "<listing_form>")]
+#[post("/", data = "<bounty_form>")]
 async fn new(
-    listing_form: Form<InitialListingInfo>,
+    bounty_form: Form<InitialBountyInfo>,
     mut db: Connection<Db>,
     active_user: ActiveUser,
 ) -> Result<Flash<Redirect>, Flash<Redirect>> {
-    let listing_info = listing_form.into_inner();
+    let bounty_info = bounty_form.into_inner();
 
-    match create_listing(listing_info, &mut db, active_user.user.clone()).await {
-        Ok(listing_id) => Ok(Flash::success(
-            Redirect::to(format!("/{}/{}", "listing", listing_id)),
-            "Listing successfully added.",
+    match create_bounty(bounty_info, &mut db, active_user.user.clone()).await {
+        Ok(bounty_id) => Ok(Flash::success(
+            Redirect::to(format!("/{}/{}", "bounty", bounty_id)),
+            "Bounty successfully added.",
         )),
         Err(e) => {
             error_!("DB insertion error: {}", e);
-            Err(Flash::error(Redirect::to(uri!("/new_listing", index())), e))
+            Err(Flash::error(Redirect::to(uri!("/new_bounty", index())), e))
         }
     }
 }
 
-async fn create_listing(
-    listing_info: InitialListingInfo,
+async fn create_bounty(
+    bounty_info: InitialBountyInfo,
     db: &mut Connection<Db>,
     user: User,
 ) -> Result<String, String> {
@@ -74,33 +74,33 @@ async fn create_listing(
         .map_err(|_| "failed to update market name.")?;
     let now = util::current_time_millis();
 
-    let price_sat = listing_info.price_sat.unwrap_or(0);
+    let price_sat = bounty_info.price_sat.unwrap_or(0);
 
-    if listing_info.title.is_empty() {
+    if bounty_info.title.is_empty() {
         return Err("Title cannot be empty.".to_string());
     };
-    if listing_info.description.is_empty() {
+    if bounty_info.description.is_empty() {
         return Err("Description cannot be empty.".to_string());
     };
-    if listing_info.title.len() > 64 {
+    if bounty_info.title.len() > 64 {
         return Err("Title length is too long.".to_string());
     };
-    if listing_info.description.len() > 4096 {
+    if bounty_info.description.len() > 4096 {
         return Err("Description length is too long.".to_string());
     };
     if price_sat == 0 {
         return Err("Price must be a positive number.".to_string());
     };
     if user.is_admin {
-        return Err("Admin user cannot create a listing.".to_string());
+        return Err("Admin user cannot create a bounty.".to_string());
     };
 
-    let listing = Listing {
+    let bounty = Bounty {
         id: None,
         public_id: util::create_uuid(),
         user_id: user.id(),
-        title: listing_info.title,
-        description: listing_info.description,
+        title: bounty_info.title,
+        description: bounty_info.description,
         price_sat,
         fee_rate_basis_points: admin_settings.fee_rate_basis_points,
         submitted: false,
@@ -110,12 +110,12 @@ async fn create_listing(
         deactivated_by_admin: false,
         created_time_ms: now,
     };
-    match Listing::insert(listing, MAX_UNAPPROVED_LISTINGS, db).await {
-        Ok(listing_id) => match Listing::single(db, listing_id).await {
-            Ok(new_listing) => Ok(new_listing.public_id),
+    match Bounty::insert(bounty, MAX_UNAPPROVED_BOUNTIES, db).await {
+        Ok(bounty_id) => match Bounty::single(db, bounty_id).await {
+            Ok(new_bounty) => Ok(new_bounty.public_id),
             Err(e) => {
                 error_!("DB insertion error: {}", e);
-                Err("New listing could not be found after inserting.".to_string())
+                Err("New bounty could not be found after inserting.".to_string())
             }
         },
         Err(e) => {
@@ -136,11 +136,11 @@ async fn index(
     let context = Context::raw(flash, db, Some(active_user.user), admin_user)
         .await
         .map_err(|_| "failed to get template context.")?;
-    Ok(Template::render("newlisting", context))
+    Ok(Template::render("newbounty", context))
 }
 
-pub fn new_listing_stage() -> AdHoc {
-    AdHoc::on_ignite("New Listing Stage", |rocket| async {
-        rocket.mount("/new_listing", routes![index, new])
+pub fn new_bounty_stage() -> AdHoc {
+    AdHoc::on_ignite("New Bounty Stage", |rocket| async {
+        rocket.mount("/new_bounty", routes![index, new])
     })
 }

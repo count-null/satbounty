@@ -67,6 +67,6 @@ async fn index(
 pub fn market_liabilities_stage() -> AdHoc {
     AdHoc::on_ignite("Market Liabilies Stage", |rocket| async {
         rocket.mount("/market_liabilities", routes![index])
-        // .mount("/listing", routes![new])
+        // .mount("/bounty", routes![new])
     })
 }

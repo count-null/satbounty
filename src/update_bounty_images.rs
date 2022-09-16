@@ -2,7 +2,7 @@ use crate::base::BaseContext;
 use crate::db::Db;
 use crate::image_util;
 use crate::models::FileUploadForm;
-use crate::models::{Listing, ListingDisplay, ListingImage};
+use crate::models::{Bounty, BountyDisplay, BountyImage};
 use crate::user_account::ActiveUser;
 use crate::util;
 use rocket::fairing::AdHoc;
@@ -21,13 +21,13 @@ use std::fs;
 struct Context {
     base_context: BaseContext,
     flash: Option<(String, String)>,
-    listing_display: Option<ListingDisplay>,
+    bounty_display: Option<BountyDisplay>,
 }
 
 impl Context {
     pub async fn raw(
         mut db: Connection<Db>,
-        listing_id: &str,
+        bounty_id: &str,
         flash: Option<(String, String)>,
         user: User,
         admin_user: Option<AdminUser>,
@@ -35,18 +35,18 @@ impl Context {
         let base_context = BaseContext::raw(&mut db, Some(user.clone()), admin_user.clone())
             .await
             .map_err(|_| "failed to get base template.")?;
-        let listing_display = ListingDisplay::single_by_public_id(&mut db, listing_id)
+        let bounty_display = BountyDisplay::single_by_public_id(&mut db, bounty_id)
             .await
-            .map_err(|_| "failed to get listing display.")?;
-        if listing_display.listing.user_id == user.id() {
+            .map_err(|_| "failed to get bounty display.")?;
+        if bounty_display.bounty.user_id == user.id() {
             Ok(Context {
                 base_context,
                 flash,
-                listing_display: Some(listing_display),
+                bounty_display: Some(bounty_display),
             })
         } else {
-            error_!("Listing belongs to other user.");
-            Err("Listing belongs to other user".into())
+            error_!("Bounty belongs to other user.");
+            Err("Bounty belongs to other user".into())
         }
     }
 }
@@ -64,12 +64,12 @@ async fn new(
 
     match upload_image(id, file, &mut db, active_user.user, admin_user).await {
         Ok(_) => Flash::success(
-            Redirect::to(uri!("/update_listing_images", index(id))),
-            "Listing image successfully added.",
+            Redirect::to(uri!("/update_bounty_images", index(id))),
+            "Bounty image successfully added.",
         ),
         Err(e) => {
-            error!("Failed to save listing image.: {}", e);
-            Flash::error(Redirect::to(uri!("/update_listing_images", index(id))), e)
+            error!("Failed to save bounty image.: {}", e);
+            Flash::error(Redirect::to(uri!("/update_bounty_images", index(id))), e)
         }
     }
 }
@@ -87,20 +87,20 @@ async fn upload_image(
     user: User,
     _admin_user: Option<AdminUser>,
 ) -> Result<(), String> {
-    let listing = Listing::single_by_public_id(db, id)
+    let bounty = Bounty::single_by_public_id(db, id)
         .await
-        .map_err(|_| "failed to get listing")?;
-    let listing_images = ListingImage::all_for_listing(db, listing.id.unwrap())
+        .map_err(|_| "failed to get bounty")?;
+    let bounty_images = BountyImage::all_for_bounty(db, bounty.id.unwrap())
         .await
-        .map_err(|_| "failed to get listing")?;
+        .map_err(|_| "failed to get bounty")?;
 
-    if listing.user_id != user.id() {
-        return Err("Listing belongs to a different user.".to_string());
+    if bounty.user_id != user.id() {
+        return Err("Bounty belongs to a different user.".to_string());
     };
-    if listing.submitted {
-        return Err("Listing is already submitted.".to_string());
+    if bounty.submitted {
+        return Err("Bounty is already submitted.".to_string());
     };
-    if listing_images.len() >= 5 {
+    if bounty_images.len() >= 5 {
         return Err("Maximum number of images already exist.".to_string());
     };
     if tmp_file.len() == 0 {
@@ -111,15 +111,15 @@ async fn upload_image(
     let cleared_metadata_image_bytes = image_util::get_stripped_image_bytes(&image_bytes)
         .map_err(|_| "failed to clear image metadata.")?;
 
-    let listing_image = ListingImage {
+    let bounty_image = BountyImage {
         id: None,
         public_id: util::create_uuid(),
-        listing_id: listing.id.unwrap(),
+        bounty_id: bounty.id.unwrap(),
         image_data: cleared_metadata_image_bytes,
         is_primary: false,
     };
 
-    ListingImage::insert(listing_image, db).await.map_err(|e| {
+    BountyImage::insert(bounty_image, db).await.map_err(|e| {
         error!("failed to save image in db: {}", e);
         "failed to save image in db."
     })?;
@@ -145,44 +145,44 @@ async fn delete(
     .await
     {
         Ok(_) => Ok(Flash::success(
-            Redirect::to(uri!("/update_listing_images", index(id))),
-            "Listing image was deleted.",
+            Redirect::to(uri!("/update_bounty_images", index(id))),
+            "Bounty image was deleted.",
         )),
         Err(e) => {
             error_!("DB deletion({}) error: {}", id, e);
             Err(Flash::error(
-                Redirect::to(uri!("/update_listing_images", index(id))),
-                "Failed to delete listing image.",
+                Redirect::to(uri!("/update_bounty_images", index(id))),
+                "Failed to delete bounty image.",
             ))
         }
     }
 }
 
 async fn delete_image_with_public_id(
-    listing_id: &str,
+    bounty_id: &str,
     image_id: &str,
     db: &mut Connection<Db>,
     user: User,
     _admin_user: Option<AdminUser>,
 ) -> Result<(), String> {
-    let listing = Listing::single_by_public_id(&mut *db, listing_id)
+    let bounty = Bounty::single_by_public_id(&mut *db, bounty_id)
         .await
-        .map_err(|_| "failed to get listing")?;
-    let listing_image = ListingImage::single_by_public_id(&mut *db, image_id)
+        .map_err(|_| "failed to get bounty")?;
+    let bounty_image = BountyImage::single_by_public_id(&mut *db, image_id)
         .await
-        .map_err(|_| "failed to get listing")?;
+        .map_err(|_| "failed to get bounty")?;
 
-    if listing_image.listing_id != listing.id.unwrap() {
-        return Err("Invalid listing id given.".to_string());
+    if bounty_image.bounty_id != bounty.id.unwrap() {
+        return Err("Invalid bounty id given.".to_string());
     };
-    if listing.submitted {
-        return Err("Listing is already submitted.".to_string());
+    if bounty.submitted {
+        return Err("Bounty is already submitted.".to_string());
     };
-    if listing.user_id != user.id() {
-        return Err("Listing belongs to a different user.".to_string());
+    if bounty.user_id != user.id() {
+        return Err("Bounty belongs to a different user.".to_string());
     };
 
-    ListingImage::delete_with_public_id(image_id, &mut *db)
+    BountyImage::delete_with_public_id(image_id, &mut *db)
         .await
         .map_err(|_| "failed to delete image.".to_string())?;
 
@@ -207,13 +207,13 @@ async fn set_primary(
     .await
     {
         Ok(_) => Ok(Flash::success(
-            Redirect::to(uri!("/update_listing_images", index(id))),
+            Redirect::to(uri!("/update_bounty_images", index(id))),
             "Image was marked as primary.",
         )),
         Err(e) => {
             error_!("DB update({}) error: {}", id, e);
             Err(Flash::error(
-                Redirect::to(uri!("/update_listing_images", index(id))),
+                Redirect::to(uri!("/update_bounty_images", index(id))),
                 "Failed to mark image as primary.",
             ))
         }
@@ -221,30 +221,30 @@ async fn set_primary(
 }
 
 async fn mark_as_primary(
-    listing_id: &str,
+    bounty_id: &str,
     image_id: &str,
     db: &mut Connection<Db>,
     user: User,
     _admin_user: Option<AdminUser>,
 ) -> Result<(), String> {
-    let listing = Listing::single_by_public_id(&mut *db, listing_id)
+    let bounty = Bounty::single_by_public_id(&mut *db, bounty_id)
         .await
-        .map_err(|_| "failed to get listing")?;
-    let listing_image = ListingImage::single_by_public_id(&mut *db, image_id)
+        .map_err(|_| "failed to get bounty")?;
+    let bounty_image = BountyImage::single_by_public_id(&mut *db, image_id)
         .await
-        .map_err(|_| "failed to get listing")?;
+        .map_err(|_| "failed to get bounty")?;
 
-    if listing_image.listing_id != listing.id.unwrap() {
-        return Err("Invalid listing id given.".to_string());
+    if bounty_image.bounty_id != bounty.id.unwrap() {
+        return Err("Invalid bounty id given.".to_string());
     };
-    if listing.submitted {
-        return Err("Listing is already submitted.".to_string());
+    if bounty.submitted {
+        return Err("Bounty is already submitted.".to_string());
     };
-    if listing.user_id != user.id() {
-        return Err("Listing belongs to a different user.".to_string());
+    if bounty.user_id != user.id() {
+        return Err("Bounty belongs to a different user.".to_string());
     };
 
-    ListingImage::mark_image_as_primary_by_public_id(&mut *db, listing.id.unwrap(), image_id)
+    BountyImage::mark_image_as_primary_by_public_id(&mut *db, bounty.id.unwrap(), image_id)
         .await
         .map_err(|_| "failed to mark image as primary.".to_string())?;
 
@@ -263,15 +263,15 @@ async fn index(
     let context = Context::raw(db, id, flash, active_user.user, admin_user)
         .await
         .map_err(|_| "failed to get template context.")?;
-    Ok(Template::render("updatelistingimages", context))
+    Ok(Template::render("updatebountyimages", context))
 }
 
-pub fn update_listing_images_stage() -> AdHoc {
-    AdHoc::on_ignite("Add Listing Images Stage", |rocket| async {
+pub fn update_bounty_images_stage() -> AdHoc {
+    AdHoc::on_ignite("Add Bounty Images Stage", |rocket| async {
         rocket
-            // .mount("/update_listing_images", routes![index, new])
+            // .mount("/update_bounty_images", routes![index, new])
             .mount(
-                "/update_listing_images",
+                "/update_bounty_images",
                 routes![index, new, delete, set_primary],
             )
     })

@@ -6,24 +6,24 @@
     </tr>
   </thead>
 
-  {% for card in listing_cards %}
+  {% for card in bounty_cards %}
   <tbody>
     <tr>
       <td>
-	<a href="/listing/{{ card.listing.public_id }}">
+	<a href="/bounty/{{ card.bounty.public_id }}">
           {% if card.image %}
 	  <img src="data:image/jpeg;base64,{{ card.image.image_data_base64 }}" style="width:128px;height:128px;" />
           {% else %}
-	  <img src="/images/default_listing.png" style="width:128px;height:128px;" />
+	  <img src="/images/default_bounty.png" style="width:128px;height:128px;" />
           {% endif %}
 	</a>
       </td>
       <td>
-	<a href="/listing/{{ card.listing.public_id }}">
-	  <h4>{{ card.listing.title }}</h4>
+	<a href="/bounty/{{ card.bounty.public_id }}">
+	  <h4>{{ card.bounty.title }}</h4>
 	</a>
-	<a href="/listing/{{ card.listing.public_id }}">
-	  {{ card.listing.price_sat }} sats
+	<a href="/bounty/{{ card.bounty.public_id }}">
+	  {{ card.bounty.price_sat }} sats
 	</a>
 	<br>
 	<a href="/user/{{ card.user.username }}">

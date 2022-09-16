@@ -8,10 +8,10 @@
 
     <div class="row">
 
-      <h3>My Unsubmitted Listings</h3>
+      <h3>Review Pending Bounties</h3>
 
       <div class="twelve columns">
-	{% include "listingtablepage" %}
+	{% include "bountytablepage" %}
       </div>
     </div>
   </div>

@@ -1,6 +1,6 @@
 use crate::base::BaseContext;
 use crate::db::Db;
-use crate::models::ListingCardDisplay;
+use crate::models::BountyCardDisplay;
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
 use rocket::serde::Serialize;
@@ -15,10 +15,8 @@ const PAGE_SIZE: u32 = 10;
 struct Context {
     base_context: BaseContext,
     flash: Option<(String, String)>,
-    listing_cards: Vec<ListingCardDisplay>,
+    bounty_cards: Vec<BountyCardDisplay>,
     page_num: u32,
-    user: Option<User>,
-    admin_user: Option<AdminUser>,
 }
 
 impl Context {
@@ -32,19 +30,15 @@ impl Context {
         let base_context = BaseContext::raw(&mut db, user.clone(), admin_user.clone())
             .await
             .map_err(|_| "failed to get base template.")?;
-
         let page_num = maybe_page_num.unwrap_or(1);
-        let listing_cards = ListingCardDisplay::all_active(&mut db, PAGE_SIZE, page_num)
+        let bounty_cards = BountyCardDisplay::all_pending(&mut db, PAGE_SIZE, page_num)
             .await
-            .map_err(|_| "failed to update market name.")?;
-
+            .map_err(|_| "failed to get pending bounties.")?;
         Ok(Context {
             base_context,
             flash,
-            listing_cards,
+            bounty_cards,
             page_num,
-            user,
-            admin_user,
         })
     }
 }
@@ -55,18 +49,18 @@ async fn index(
     db: Connection<Db>,
     page_num: Option<u32>,
     user: Option<User>,
-    admin_user: Option<AdminUser>,
+    admin_user: AdminUser,
 ) -> Result<Template, String> {
     let flash = flash.map(FlashMessage::into_inner);
-    let context = Context::raw(flash, db, page_num, user, admin_user)
+    let context = Context::raw(flash, db, page_num, user, Some(admin_user))
         .await
         .map_err(|_| "failed to get template context.")?;
-    Ok(Template::render("listingsindex", context))
+    Ok(Template::render("reviewpendingbounties", context))
 }
 
-pub fn listings_stage() -> AdHoc {
-    AdHoc::on_ignite("Listings Stage", |rocket| async {
-        rocket.mount("/", routes![index])
-        // .mount("/listing", routes![new])
+pub fn review_pending_bounties_stage() -> AdHoc {
+    AdHoc::on_ignite("Pending Bounties Stage", |rocket| async {
+        rocket.mount("/review_pending_bounties", routes![index])
+        // .mount("/bounty", routes![new])
     })
 }

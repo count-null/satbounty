@@ -61,6 +61,6 @@ async fn index(
 pub fn top_sellers_stage() -> AdHoc {
     AdHoc::on_ignite("Top Sellers Stage", |rocket| async {
         rocket.mount("/top_sellers", routes![index])
-        // .mount("/listing", routes![new])
+        // .mount("/bounty", routes![new])
     })
 }

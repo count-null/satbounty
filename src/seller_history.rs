@@ -83,6 +83,6 @@ async fn index(
 pub fn seller_history_stage() -> AdHoc {
     AdHoc::on_ignite("Seller History Stage", |rocket| async {
         rocket.mount("/seller_history", routes![index])
-        // .mount("/listing", routes![new])
+        // .mount("/bounty", routes![new])
     })
 }

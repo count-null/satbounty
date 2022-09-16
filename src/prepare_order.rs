@@ -2,7 +2,7 @@ use crate::base::BaseContext;
 use crate::config::Config;
 use crate::db::Db;
 use crate::lightning;
-use crate::models::{Listing, ListingDisplay, Order, OrderInfo,  UserSettings};
+use crate::models::{Bounty, BountyDisplay, Order, OrderInfo,  UserSettings};
 use crate::user_account::ActiveUser;
 use crate::util;
 use pgp::composed::{Deserializable, Message};
@@ -25,7 +25,7 @@ const MAX_UNPAID_ORDERS: u32 = 100;
 struct Context {
     base_context: BaseContext,
     flash: Option<(String, String)>,
-    listing_display: Option<ListingDisplay>,
+    bounty_display: Option<BountyDisplay>,
     quantity: i32,
     seller_user_settings: UserSettings,
 }
@@ -33,7 +33,7 @@ struct Context {
 impl Context {
     pub async fn raw(
         mut db: Connection<Db>,
-        listing_id: &str,
+        bounty_id: &str,
         quantity: i32,
         flash: Option<(String, String)>,
         user: User,
@@ -42,16 +42,16 @@ impl Context {
         let base_context = BaseContext::raw(&mut db, Some(user.clone()), admin_user.clone())
             .await
             .map_err(|_| "failed to get base template.")?;
-        let listing_display = ListingDisplay::single_by_public_id(&mut db, listing_id)
+        let bounty_display = BountyDisplay::single_by_public_id(&mut db, bounty_id)
             .await
             .map_err(|_| "failed to get admin settings.")?;
-        let seller_user_settings = UserSettings::single(&mut db, listing_display.listing.user_id)
+        let seller_user_settings = UserSettings::single(&mut db, bounty_display.bounty.user_id)
             .await
             .map_err(|_| "failed to get visited user settings.")?;
         Ok(Context {
             base_context,
             flash,
-            listing_display: Some(listing_display),
+            bounty_display: Some(bounty_display),
             quantity,
             seller_user_settings,
         })
@@ -96,23 +96,23 @@ async fn new(
 }
 
 async fn create_order(
-    listing_id: &str,
+    bounty_id: &str,
     order_info: OrderInfo,
     db: &mut Connection<Db>,
     user: User,
     config: Config,
 ) -> Result<String, String> {
-    let listing = Listing::single_by_public_id(db, listing_id)
+    let bounty = Bounty::single_by_public_id(db, bounty_id)
         .await
-        .map_err(|_| "failed to get listing")?;
+        .map_err(|_| "failed to get bounty")?;
     let now = util::current_time_millis();
     let case_details = order_info.case_details;
     let quantity = order_info.quantity.unwrap_or(0);
 
-    let amount_owed_sat: u64 = (quantity as u64) * listing.price_sat; 
-    // let market_fee_sat: u64 = (amount_owed_sat * (listing.fee_rate_basis_points as u64)) / 10000;
+    let amount_owed_sat: u64 = (quantity as u64) * bounty.price_sat; 
+    // let market_fee_sat: u64 = (amount_owed_sat * (bounty.fee_rate_basis_points as u64)) / 10000;
     let market_fee_sat: u64 = divide_round_up(
-        amount_owed_sat * (listing.fee_rate_basis_points as u64),
+        amount_owed_sat * (bounty.fee_rate_basis_points as u64),
         10000,
     );
     let seller_credit_sat: u64 = amount_owed_sat - market_fee_sat;
@@ -127,14 +127,14 @@ async fn create_order(
     if case_details.len() > 4096 {
         return Err("Case details length is too long.".to_string());
     };
-    if listing.user_id == user.id() {
-        return Err("Listing belongs to same user as buyer.".to_string());
+    if bounty.user_id == user.id() {
+        return Err("Bounty belongs to same user as buyer.".to_string());
     };
-    if !listing.approved {
-        return Err("Listing has not been approved by admin.".to_string());
+    if !bounty.approved {
+        return Err("Bounty has not been approved by admin.".to_string());
     };
-    if listing.deactivated_by_seller || listing.deactivated_by_admin {
-        return Err("Listing has been deactivated.".to_string());
+    if bounty.deactivated_by_seller || bounty.deactivated_by_admin {
+        return Err("Bounty has been deactivated.".to_string());
     };
     if user.is_admin {
         return Err("Admin user cannot create an order.".to_string());
@@ -165,8 +165,8 @@ async fn create_order(
         public_id: util::create_uuid(),
         quantity,
         buyer_user_id: user.id(),
-        seller_user_id: listing.user_id,
-        listing_id: listing.id.unwrap(),
+        seller_user_id: bounty.user_id,
+        bounty_id: bounty.id.unwrap(),
         case_details: case_details.to_string(),
         amount_owed_sat,
         seller_credit_sat,
