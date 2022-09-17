@@ -8,10 +8,11 @@
 
     <div class="row">
 
-      <h3>My Paid Orders</h3>
+      <h3>My Processing Cases</h3>
+      <p>Cases you have recieved for bounties not yet awarded</p>
 
       <div class="twelve columns">
-	{% include "ordercardpage" %}
+	{% include "casecardpage" %}
       </div>
     </div>
   </div>

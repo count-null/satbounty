@@ -96,13 +96,13 @@
 
 	  {% if bounty_display.bounty.approved %}
 	  {% if not admin_user %}
-	  <form action="/prepare_order/{{ bounty_display.bounty.public_id }}" method="get">
+	  <form action="/prepare_case/{{ bounty_display.bounty.public_id }}" method="get">
 	    <label for="quantity">Choose quantity:</label>
 	    <input type="number" placeholder="enter the quantity of items..."
 		   name="quantity" id="quantity" value="1"/>
 
 	    <label for="submit"></label>
-	    <input type="submit" value="Prepare Order">
+	    <input type="submit" value="Prepare Case">
 	  </form>
 	  {% endif %}
 	  {% endif %}

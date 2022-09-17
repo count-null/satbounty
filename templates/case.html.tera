@@ -6,14 +6,14 @@
   <p><!--Nothing to see here --></p>
 
   <!-- Options for the seller -->
-  {% if user and order.seller_user_id == user.id %}
-  {% if order.paid and not order.awarded and not order.canceled_by_seller and not order.canceled_by_buyer %}
+  {% if user and case.seller_user_id == user.id %}
+  {% if case.paid and not case.awarded and not case.canceled_by_seller and not case.canceled_by_buyer %}
   <h5>Award or Reject Case</h5>
-  <form class="inline" action="/order/{{ order.public_id }}/award" method="post">
+  <form class="inline" action="/case/{{ case.public_id }}/award" method="post">
     <input type="hidden" name="_method" value="put" />
     <button class="small" type="submit">Award Case</button>
   </form>
-  <form class="inline" action="/order/{{ order.public_id }}/seller_cancel" method="post">
+  <form class="inline" action="/case/{{ case.public_id }}/seller_cancel" method="post">
     <input type="hidden" name="_method" value="put" />
     <button class="small" type="submit">Reject Case</button>
   </form>
@@ -21,10 +21,10 @@
   {% endif %}
 
   <!-- Options for the buyer -->
-  {% if user and order.buyer_user_id == user.id %}
-  {% if order.paid and not order.awarded and not order.canceled_by_seller and not order.canceled_by_buyer %}
-  <h5>Cancel Order</h5>
-  <form class="inline" action="/order/{{ order.public_id }}/buyer_cancel" method="post">
+  {% if user and case.buyer_user_id == user.id %}
+  {% if case.paid and not case.awarded and not case.canceled_by_seller and not case.canceled_by_buyer %}
+  <h5>Cancel Case</h5>
+  <form class="inline" action="/case/{{ case.public_id }}/buyer_cancel" method="post">
     <input type="hidden" name="_method" value="put" />
     <button class="small" type="submit">Mark as canceled</button>
   </form>
@@ -42,44 +42,44 @@
 	</small>
 	{% endif %}
 
-	<h3>Order</h3>
+	<h3>Case</h3>
 
-	<p><b>Order id</b>: {{ order.public_id }}</p>
+	<p><b>Case id</b>: {{ case.public_id }}</p>
 	<p><b>Status</b>:
-	  {% if not order.paid %}
+	  {% if not case.paid %}
 	  Not paid
 	  {% else %}
-	  {% if order.awarded %}Awarded{% elif order.canceled_by_seller%}Canceled by seller{% elif order.canceled_by_buyer %}Canceled by buyer{% else %}Pending ... (waiting for bounty to be awarded){% endif %}
+	  {% if case.awarded %}Awarded{% elif case.canceled_by_seller%}Canceled by seller{% elif case.canceled_by_buyer %}Canceled by buyer{% else %}Pending ... (waiting for bounty to be awarded){% endif %}
 	  {% endif %}</p>
-        <p><b>Order time</b>: {{ (order.created_time_ms / 1000) | int | date(format="%Y-%m-%d %H:%M") }}</p>
+        <p><b>Case time</b>: {{ (case.created_time_ms / 1000) | int | date(format="%Y-%m-%d %H:%M") }}</p>
 
 	<p><b>Bounty</b>: {% if maybe_bounty %}<a href="/bounty/{{ maybe_bounty.public_id }}">{{ maybe_bounty.title }}</a> ({{ maybe_bounty.price_sat }} sats){% else %}Not found{% endif %}</p>
 	<p><b>Seller</b>: {% if maybe_seller_user %}<a href="/user/{{ maybe_seller_user.username }}">{{ maybe_seller_user.username }}</a>{% else %}Not found{% endif %}</p>
-	<p><b>Quantity</b>: {{ order.quantity }}</p>
-	<p><b>Payment amount</b>: {% if maybe_bounty %}{{ order.quantity }} x ({{ maybe_bounty.price_sat }} sats) = {% endif %}<b>{{ order.amount_owed_sat }} sats</b></p>
+	<p><b>Quantity</b>: {{ case.quantity }}</p>
+	<p><b>Payment amount</b>: {% if maybe_bounty %}{{ case.quantity }} x ({{ maybe_bounty.price_sat }} sats) = {% endif %}<b>{{ case.amount_owed_sat }} sats</b></p>
 	{% if user %}
-	{% if order.seller_user_id == user.id or admin_user %}
-	<p><b>Market fee amount</b>: {% if maybe_bounty %}{{ maybe_bounty.fee_rate_basis_points / 10000 }} x {{ order.amount_owed_sat }} sats = {% endif %}{{ order.amount_owed_sat - order.seller_credit_sat }} sats</p>
-	<p><b>Seller credit amount</b>: {{ order.amount_owed_sat }} sats - {{ order.amount_owed_sat - order.seller_credit_sat }} sats = {{ order.seller_credit_sat }} sats</p>
+	{% if case.seller_user_id == user.id or admin_user %}
+	<p><b>Market fee amount</b>: {% if maybe_bounty %}{{ maybe_bounty.fee_rate_basis_points / 10000 }} x {{ case.amount_owed_sat }} sats = {% endif %}{{ case.amount_owed_sat - case.seller_credit_sat }} sats</p>
+	<p><b>Seller credit amount</b>: {{ case.amount_owed_sat }} sats - {{ case.amount_owed_sat - case.seller_credit_sat }} sats = {{ case.seller_credit_sat }} sats</p>
 	{% endif %}
 	{% endif %}
 
-	{% if not order.awarded and not order.canceled_by_seller and not order.canceled_by_buyer %}
+	{% if not case.awarded and not case.canceled_by_seller and not case.canceled_by_buyer %}
 	{% if user %}
-	{% if order.buyer_user_id == user.id or order.seller_user_id == user.id or admin_user %}
-	<p><b>Case details</b>: <pre>{{ order.case_details }}</pre></p>
+	{% if case.buyer_user_id == user.id or case.seller_user_id == user.id or admin_user %}
+	<p><b>Case details</b>: <pre>{{ case.case_details }}</pre></p>
 	{% endif %}
 	{% endif %}
 	{% endif %}
 
-	{% if order.paid %}
-        <p><b>Payment time</b>: {{ (order.payment_time_ms / 1000) | int | date(format="%Y-%m-%d %H:%M") }}</p>
+	{% if case.paid %}
+        <p><b>Payment time</b>: {{ (case.payment_time_ms / 1000) | int | date(format="%Y-%m-%d %H:%M") }}</p>
 	{% else %}
 	<p><b>Payment request</b>:<p>
 	  <img src="data:image/bmp;base64,{{ qr_svg_base64 }}" style="width:256px;height:256px;" />
 	<p>
 	  <pre>
-	    {{ order.invoice_payment_request }}
+	    {{ case.invoice_payment_request }}
 	  </pre>
 	</p>
 	<p><b>Open a channel to the market</b>: <a href="https://amboss.space/node/{{ lightning_node_pubkey }}" rel="noreferrer noopener" target="_blank">{{ lightning_node_pubkey }}</a></p>
@@ -90,20 +90,20 @@
     </div>
 
     <div class="one-half column">
-      {% if order.awarded %}
+      {% if case.awarded %}
       <div class="container">
-	{% if order.reviewed %}
+	{% if case.reviewed %}
 	<h3>Review</h3>
 
-	<p><b>Rating</b>: {{ order.review_rating }}</p>
-	<p><b>Review</b>: {{ order.review_text }}</p>
-        <p><b>Review time</b>: {{ (order.review_time_ms / 1000) | int | date(format="%Y-%m-%d %H:%M") }}</p>
+	<p><b>Rating</b>: {{ case.review_rating }}</p>
+	<p><b>Review</b>: {{ case.review_text }}</p>
+        <p><b>Review time</b>: {{ (case.review_time_ms / 1000) | int | date(format="%Y-%m-%d %H:%M") }}</p>
 	{% endif %}
 
 	{% if user %}
-	{% if user.id == order.buyer_user_id %}
-	<h4> {% if not order.reviewed %}Review This Order{% else %}Update Review{% endif %}</h4>
-	<form action="/order/{{ order.public_id }}/new_review" method="post">
+	{% if user.id == case.buyer_user_id %}
+	<h4> {% if not case.reviewed %}Review This Case{% else %}Update Review{% endif %}</h4>
+	<form action="/case/{{ case.public_id }}/new_review" method="post">
 	  <label for="review_ratings">Choose a review rating (1-5):</label>
 	  <select id="review_rating" name="review_rating">
 	    <option disabled selected value> -- select a rating -- </option>

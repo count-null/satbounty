@@ -1,6 +1,6 @@
 use crate::base::BaseContext;
 use crate::db::Db;
-use crate::models::{Order, OrderCard, RocketAuthUser};
+use crate::models::{Case, CaseCard, RocketAuthUser};
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
 use rocket::serde::Serialize;
@@ -18,7 +18,7 @@ struct Context {
     visited_user: RocketAuthUser,
     amount_sold_sat: u64,
     weighted_average_rating: f32,
-    order_cards: Vec<OrderCard>,
+    case_cards: Vec<CaseCard>,
     page_num: u32,
 }
 
@@ -39,15 +39,15 @@ impl Context {
                 .await
                 .map_err(|_| "failed to get visited user.")?;
         let page_num = maybe_page_num.unwrap_or(1);
-        let order_cards = OrderCard::all_received_for_user(
+        let case_cards = CaseCard::all_received_for_user(
             &mut db,
             visited_user.id.unwrap(),
             PAGE_SIZE,
             page_num,
         )
         .await
-        .map_err(|_| "failed to get received orders for user.")?;
-        let seller_info = Order::seller_info_for_user(&mut db, visited_user.id.unwrap())
+        .map_err(|_| "failed to get received cases for user.")?;
+        let seller_info = Case::seller_info_for_user(&mut db, visited_user.id.unwrap())
             .await
             .map_err(|_| "failed to get weighted average rating for user.")?;
         let weighted_average_rating = seller_info.weighted_average_rating;
@@ -58,7 +58,7 @@ impl Context {
             visited_user,
             amount_sold_sat,
             weighted_average_rating,
-            order_cards,
+            case_cards,
             page_num,
         })
     }

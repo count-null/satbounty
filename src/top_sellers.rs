@@ -1,6 +1,6 @@
 use crate::base::BaseContext;
 use crate::db::Db;
-use crate::models::{Order, SellerInfo};
+use crate::models::{Case, SellerInfo};
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
 use rocket::serde::Serialize;
@@ -31,7 +31,7 @@ impl Context {
             .await
             .map_err(|_| "failed to get base template.")?;
         let page_num = maybe_page_num.unwrap_or(1);
-        let seller_infos = Order::seller_info_for_all_users(&mut db, PAGE_SIZE, page_num)
+        let seller_infos = Case::seller_info_for_all_users(&mut db, PAGE_SIZE, page_num)
             .await
             .map_err(|_| "failed to get seller infos for top users.")?;
         Ok(Context {

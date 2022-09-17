@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::lightning::get_lnd_invoices_client;
-use crate::models::Order;
+use crate::models::Case;
 use crate::util;
 use sqlx::pool::PoolConnection;
 use sqlx::Sqlite;
@@ -8,7 +8,7 @@ use tonic_openssl_lnd::LndInvoicesClient;
 
 const ORDER_EXPIRY_INTERVAL_MS: u64 = 86400000;
 
-pub async fn remove_expired_orders(
+pub async fn remove_expired_cases(
     config: Config,
     mut conn: PoolConnection<Sqlite>,
 ) -> Result<(), String> {
@@ -21,38 +21,38 @@ pub async fn remove_expired_orders(
     .await
     .map_err(|e| format!("failed to get lightning client: {:?}", e))?;
 
-    // Get all orders older than expiry time limit.
+    // Get all cases older than expiry time limit.
     let now = util::current_time_millis();
     let expiry_cutoff = now - ORDER_EXPIRY_INTERVAL_MS;
-    let expired_orders = Order::all_older_than(&mut conn, expiry_cutoff)
+    let expired_cases = Case::all_older_than(&mut conn, expiry_cutoff)
         .await
-        .map_err(|_| "failed to expired orders.")?;
+        .map_err(|_| "failed to expired cases.")?;
 
-    for order in expired_orders {
-        remove_order(&mut conn, &order, &mut lightning_invoices_client)
+    for case in expired_cases {
+        remove_case(&mut conn, &case, &mut lightning_invoices_client)
             .await
             .ok();
     }
     Ok(())
 }
 
-async fn remove_order(
+async fn remove_case(
     conn: &mut PoolConnection<Sqlite>,
-    order: &Order,
+    case: &Case,
     lightning_invoices_client: &mut LndInvoicesClient,
 ) -> Result<(), String> {
-    println!("deleting expired order: {:?}", order);
-    let cancel_order_invoice_ret = cancel_order_invoice(
+    println!("deleting expired case: {:?}", case);
+    let cancel_case_invoice_ret = cancel_case_invoice(
         lightning_invoices_client,
-        util::from_hex(&order.invoice_hash),
+        util::from_hex(&case.invoice_hash),
     );
-    Order::delete_expired_order(conn, order.id.unwrap(), cancel_order_invoice_ret)
+    Case::delete_expired_case(conn, case.id.unwrap(), cancel_case_invoice_ret)
         .await
         .expect("failed to delete expired user account.");
     Ok(())
 }
 
-async fn cancel_order_invoice(
+async fn cancel_case_invoice(
     lightning_invoices_client: &mut LndInvoicesClient,
     payment_hash: Vec<u8>,
 ) -> Result<tonic_openssl_lnd::invoicesrpc::CancelInvoiceResp, String> {

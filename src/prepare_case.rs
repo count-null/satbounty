@@ -2,7 +2,7 @@ use crate::base::BaseContext;
 use crate::config::Config;
 use crate::db::Db;
 use crate::lightning;
-use crate::models::{Bounty, BountyDisplay, Order, OrderInfo,  UserSettings};
+use crate::models::{Bounty, BountyDisplay, Case, CaseInfo,  UserSettings};
 use crate::user_account::ActiveUser;
 use crate::util;
 use pgp::composed::{Deserializable, Message};
@@ -58,35 +58,35 @@ impl Context {
     }
 }
 
-#[post("/<id>/new", data = "<order_form>")]
+#[post("/<id>/new", data = "<case_form>")]
 async fn new(
     id: &str,
-    order_form: Form<OrderInfo>,
+    case_form: Form<CaseInfo>,
     mut db: Connection<Db>,
     active_user: ActiveUser,
     _admin_user: Option<AdminUser>,
     config: &State<Config>,
 ) -> Result<Flash<Redirect>, Flash<Redirect>> {
-    let order_info = order_form.into_inner();
+    let case_info = case_form.into_inner();
 
-    match create_order(
+    match create_case(
         id,
-        order_info.clone(),
+        case_info.clone(),
         &mut db,
         active_user.user.clone(),
         config.inner().clone(),
     )
     .await
     {
-        Ok(order_id) => Ok(Flash::success(
-            Redirect::to(format!("/{}/{}", "order", order_id)),
-            "Order successfully created.",
+        Ok(case_id) => Ok(Flash::success(
+            Redirect::to(format!("/{}/{}", "case", case_id)),
+            "Case successfully created.",
         )),
         Err(e) => {
             error_!("DB insertion error: {}", e);
             Err(Flash::error(
                 Redirect::to(uri!(
-                    "/prepare_order",
+                    "/prepare_case",
                     index(id, 1)
                 )),
                 e,
@@ -95,9 +95,9 @@ async fn new(
     }
 }
 
-async fn create_order(
+async fn create_case(
     bounty_id: &str,
-    order_info: OrderInfo,
+    case_info: CaseInfo,
     db: &mut Connection<Db>,
     user: User,
     config: Config,
@@ -106,8 +106,8 @@ async fn create_order(
         .await
         .map_err(|_| "failed to get bounty")?;
     let now = util::current_time_millis();
-    let case_details = order_info.case_details;
-    let quantity = order_info.quantity.unwrap_or(0);
+    let case_details = case_info.case_details;
+    let quantity = case_info.quantity.unwrap_or(0);
 
     let amount_owed_sat: u64 = (quantity as u64) * bounty.price_sat; 
     // let market_fee_sat: u64 = (amount_owed_sat * (bounty.fee_rate_basis_points as u64)) / 10000;
@@ -137,7 +137,7 @@ async fn create_order(
         return Err("Bounty has been deactivated.".to_string());
     };
     if user.is_admin {
-        return Err("Admin user cannot create an order.".to_string());
+        return Err("Admin user cannot create an case.".to_string());
     };
     if quantity == 0 {
         return Err("Quantity must be postive.".to_string());
@@ -160,7 +160,7 @@ async fn create_order(
         .expect("failed to get new invoice")
         .into_inner();
 
-    let order = Order {
+    let case = Case {
         id: None,
         public_id: util::create_uuid(),
         quantity,
@@ -184,12 +184,12 @@ async fn create_order(
         review_time_ms: 0,
     };
 
-    match Order::insert(order, MAX_UNPAID_ORDERS, db).await {
-        Ok(order_id) => match Order::single(db, order_id).await {
-            Ok(new_order) => Ok(new_order.public_id),
+    match Case::insert(case, MAX_UNPAID_ORDERS, db).await {
+        Ok(case_id) => match Case::single(db, case_id).await {
+            Ok(new_case) => Ok(new_case.public_id),
             Err(e) => {
                 error_!("DB insertion error: {}", e);
-                Err("New order could not be found after inserting.".to_string())
+                Err("New case could not be found after inserting.".to_string())
             }
         },
         Err(e) => {
@@ -223,11 +223,11 @@ async fn index(
     )
     .await
     .map_err(|_| "failed to get template context.")?;
-    Ok(Template::render("prepareorder", context))
+    Ok(Template::render("preparecase", context))
 }
 
-pub fn prepare_order_stage() -> AdHoc {
-    AdHoc::on_ignite("Prepare Order Stage", |rocket| async {
-        rocket.mount("/prepare_order", routes![index, new])
+pub fn prepare_case_stage() -> AdHoc {
+    AdHoc::on_ignite("Prepare Case Stage", |rocket| async {
+        rocket.mount("/prepare_case", routes![index, new])
     })
 }

@@ -16,7 +16,7 @@
 	<p><b>Total Amount Sold</b>: {{ amount_sold_sat }} sats</p>
 	<p><b>Weighted Average Rating</b>: {{ weighted_average_rating | round(method="ceil", precision=2) }}</p>
 
-	{% include "ordercardpage" %}
+	{% include "casecardpage" %}
 
       </div>
     </div>

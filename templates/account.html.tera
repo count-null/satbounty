@@ -25,7 +25,7 @@
     <h5>Seller Info</h5>
     <a href="/seller_history/{{ user.email }}">My Awarded Bounties</a>
     <br>
-    <a href="my_processing_orders">My Processing Orders</a>
+    <a href="my_processing_cases">My Processing Cases</a>
     <br>
     <a href="/new_bounty">Add New Bounty</a>
     <br>
@@ -45,9 +45,9 @@
   <p><!--Nothing to see here --></p>
   <div class="row">
     <h5>Buyer Info</h5>
-    <a href="my_unpaid_orders">My Unpaid Orders</a>
+    <a href="my_unpaid_cases">My Unpaid Cases</a>
     <br>
-    <a href="my_paid_orders">My Paid Orders</a>
+    <a href="my_paid_cases">My Paid Cases</a>
   </div>
 </div>
 

@@ -10,6 +10,16 @@
     },
     "query": "DELETE FROM bountyimages WHERE public_id = ?"
   },
+  "06bb86de78cc33eb7d11ec2df7f30cd97de4062bd2d2c8fc4ebac6f3469027d9": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 2
+      }
+    },
+    "query": "UPDATE cases SET paid = true, payment_time_ms = ? WHERE id = ?"
+  },
   "091a2c22695d40516014a93a1a721d7ecbf23a9103295de371c6b29380aef341": {
     "describe": {
       "columns": [],
@@ -294,36 +304,66 @@
     },
     "query": "\nselect\n bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n bounties\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nINNER JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n not bounties.approved\nAND\n bounties.reviewed\nAND\n users.id = ?\nGROUP BY\n bounties.id\nORDER BY bounties.created_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
   },
-  "14ec3655058b000b260baf3e3214cff428dcae70b910cce7851ff2a46f99c003": {
+  "1dec33bb907789c678357a383a33faa10b0aaf9b290a0eed03dd12b52b254a18": {
     "describe": {
       "columns": [
         {
-          "name": "order_id",
+          "name": "id",
           "ordinal": 0,
           "type_info": "Int64"
         },
         {
-          "name": "order_public_id",
+          "name": "user_id",
+          "ordinal": 1,
+          "type_info": "Int64"
+        },
+        {
+          "name": "pgp_key",
+          "ordinal": 2,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "select * from usersettings WHERE user_id = ?;"
+  },
+  "1e863ea5f640d85946c064b241e0602e229af101293176f957831512e1a85992": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "public_id",
           "ordinal": 1,
           "type_info": "Text"
         },
         {
-          "name": "order_buyer_user_id",
+          "name": "buyer_user_id",
           "ordinal": 2,
           "type_info": "Int64"
         },
         {
-          "name": "order_seller_user_id",
+          "name": "seller_user_id",
           "ordinal": 3,
           "type_info": "Int64"
         },
         {
-          "name": "order_quantity",
+          "name": "quantity",
           "ordinal": 4,
           "type_info": "Int64"
         },
         {
-          "name": "order_bounty_id",
+          "name": "bounty_id",
           "ordinal": 5,
           "type_info": "Int64"
         },
@@ -363,9 +403,9 @@
           "type_info": "Bool"
         },
         {
-          "name": "order_reviewed",
+          "name": "invoice_payment_request",
           "ordinal": 13,
-          "type_info": "Bool"
+          "type_info": "Text"
         },
         {
           "name": "invoice_hash",
@@ -373,7 +413,7 @@
           "type_info": "Text"
         },
         {
-          "name": "invoice_payment_request",
+          "name": "review_text",
           "ordinal": 15,
           "type_info": "Text"
         },
@@ -383,9 +423,9 @@
           "type_info": "Int64"
         },
         {
-          "name": "review_text",
+          "name": "reviewed",
           "ordinal": 17,
-          "type_info": "Text"
+          "type_info": "Bool"
         },
         {
           "name": "created_time_ms",
@@ -393,185 +433,35 @@
           "type_info": "Int64"
         },
         {
-          "name": "payment_time_ms",
+          "name": "review_time_ms",
           "ordinal": 19,
           "type_info": "Int64"
         },
         {
-          "name": "review_time_ms",
+          "name": "payment_time_ms",
           "ordinal": 20,
           "type_info": "Int64"
-        },
-        {
-          "name": "id",
-          "ordinal": 21,
-          "type_info": "Int64"
-        },
-        {
-          "name": "bounty_public_id",
-          "ordinal": 22,
-          "type_info": "Text"
-        },
-        {
-          "name": "bounty_user_id",
-          "ordinal": 23,
-          "type_info": "Int64"
-        },
-        {
-          "name": "title",
-          "ordinal": 24,
-          "type_info": "Text"
-        },
-        {
-          "name": "description",
-          "ordinal": 25,
-          "type_info": "Text"
-        },
-        {
-          "name": "price_sat",
-          "ordinal": 26,
-          "type_info": "Int64"
-        },
-        {
-          "name": "fee_rate_basis_points",
-          "ordinal": 27,
-          "type_info": "Int64"
-        },
-        {
-          "name": "submitted",
-          "ordinal": 28,
-          "type_info": "Bool"
-        },
-        {
-          "name": "reviewed",
-          "ordinal": 29,
-          "type_info": "Bool"
-        },
-        {
-          "name": "approved",
-          "ordinal": 30,
-          "type_info": "Bool"
-        },
-        {
-          "name": "deactivated_by_seller",
-          "ordinal": 31,
-          "type_info": "Bool"
-        },
-        {
-          "name": "deactivated_by_admin",
-          "ordinal": 32,
-          "type_info": "Bool"
-        },
-        {
-          "name": "bounty_created_time_ms",
-          "ordinal": 33,
-          "type_info": "Int64"
-        },
-        {
-          "name": "image_id",
-          "ordinal": 34,
-          "type_info": "Int64"
-        },
-        {
-          "name": "image_public_id",
-          "ordinal": 35,
-          "type_info": "Text"
-        },
-        {
-          "name": "bounty_id",
-          "ordinal": 36,
-          "type_info": "Int64"
-        },
-        {
-          "name": "image_data",
-          "ordinal": 37,
-          "type_info": "Blob"
-        },
-        {
-          "name": "is_primary",
-          "ordinal": 38,
-          "type_info": "Bool"
-        },
-        {
-          "name": "rocket_auth_user_id",
-          "ordinal": 39,
-          "type_info": "Int64"
-        },
-        {
-          "name": "rocket_auth_user_username",
-          "ordinal": 40,
-          "type_info": "Text"
         }
       ],
       "nullable": [
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true
-      ],
-      "parameters": {
-        "Right": 3
-      }
-    },
-    "query": "\nselect\n orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n orders\nLEFT JOIN\n bounties\nON\n orders.bounty_id = bounties.id\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nLEFT JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n orders.paid\nAND\n not (orders.awarded OR orders.canceled_by_seller OR orders.canceled_by_buyer)\nAND\n orders.seller_user_id = ?\nGROUP BY\n orders.id\nORDER BY orders.payment_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
-  },
-  "1dec33bb907789c678357a383a33faa10b0aaf9b290a0eed03dd12b52b254a18": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int64"
-        },
-        {
-          "name": "user_id",
-          "ordinal": 1,
-          "type_info": "Int64"
-        },
-        {
-          "name": "pgp_key",
-          "ordinal": 2,
-          "type_info": "Text"
-        }
-      ],
-      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
         false,
         false,
         false
@@ -580,7 +470,7 @@
         "Right": 1
       }
     },
-    "query": "select * from usersettings WHERE user_id = ?;"
+    "query": "select * from cases WHERE id = ?;"
   },
   "232c44d15eaa7386736ccaad2217bfbbd0bae8ea06338ee531a0c851d6c2b6da": {
     "describe": {
@@ -806,6 +696,16 @@
     },
     "query": "UPDATE usersettings SET pgp_key = ? WHERE user_id = ?;"
   },
+  "3916a133e30bcfbc9477aef58c68acc763d3a2ce68efa2e7bac1b1ff17ab2a80": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 20
+      }
+    },
+    "query": "INSERT INTO cases (public_id, buyer_user_id, seller_user_id, quantity, bounty_id, case_details, amount_owed_sat, seller_credit_sat, paid, awarded, canceled_by_seller, canceled_by_buyer, reviewed, review_text, review_rating, invoice_hash, invoice_payment_request, created_time_ms, payment_time_ms, review_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+  },
   "39d6cd7e415b7b2ca85a27a8339cb4ed7cf44f1fc718240ebd7d8371dfc6eb11": {
     "describe": {
       "columns": [],
@@ -816,36 +716,56 @@
     },
     "query": "UPDATE adminsettings SET pgp_key = ?"
   },
-  "3a5ffa12ba1f94b1b1efa55ef850176c9e619e30a254fc46a5bdfefe7040b469": {
+  "3d6417a77030ee04567532f9e33f1822aebc84e3911fd69cb676eed42ce865f7": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\nDELETE FROM useraccounts\nWHERE\n user_id = ?\nAND\n paid = true\n;"
+  },
+  "3db19aafcf38c64b28dff451c99ca7b5dba4adcf3d77f6e7a9791a8342dde18d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\nUPDATE\n cases\nSET\n awarded = true, case_details= ''\nWHERE\n id = ?\nAND\n paid\nAND\n not (awarded OR canceled_by_seller OR canceled_by_buyer)\n;"
+  },
+  "3fd74a527160a74af41fc1fa6798eb418de521be9467e91107dc5722bef33a68": {
     "describe": {
       "columns": [
         {
-          "name": "order_id",
+          "name": "case_id",
           "ordinal": 0,
           "type_info": "Int64"
         },
         {
-          "name": "order_public_id",
+          "name": "case_public_id",
           "ordinal": 1,
           "type_info": "Text"
         },
         {
-          "name": "order_buyer_user_id",
+          "name": "case_buyer_user_id",
           "ordinal": 2,
           "type_info": "Int64"
         },
         {
-          "name": "order_seller_user_id",
+          "name": "case_seller_user_id",
           "ordinal": 3,
           "type_info": "Int64"
         },
         {
-          "name": "order_quantity",
+          "name": "case_quantity",
           "ordinal": 4,
           "type_info": "Int64"
         },
         {
-          "name": "order_bounty_id",
+          "name": "case_bounty_id",
           "ordinal": 5,
           "type_info": "Int64"
         },
@@ -885,7 +805,7 @@
           "type_info": "Bool"
         },
         {
-          "name": "order_reviewed",
+          "name": "case_reviewed",
           "ordinal": 13,
           "type_info": "Bool"
         },
@@ -1072,35 +992,7 @@
         "Right": 3
       }
     },
-    "query": "\nselect\n orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n orders\nLEFT JOIN\n bounties\nON\n orders.bounty_id = bounties.id\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nLEFT JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n not orders.paid\nAND\n order_buyer_user_id = ?\nGROUP BY\n orders.id\nORDER BY orders.created_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
-  },
-  "3d6417a77030ee04567532f9e33f1822aebc84e3911fd69cb676eed42ce865f7": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "\nDELETE FROM useraccounts\nWHERE\n user_id = ?\nAND\n paid = true\n;"
-  },
-  "3f2673f9a5ee4f8a237830b5ce4728edfb7ccc85060c68dec027f2baaf39b7af": {
-    "describe": {
-      "columns": [
-        {
-          "name": "num_processing_orders",
-          "ordinal": 0,
-          "type_info": "Int"
-        }
-      ],
-      "nullable": [
-        false
-      ],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "\nselect\n COUNT(orders.id) as num_processing_orders\nfrom\n orders\nWHERE\n orders.paid\nAND\n not (orders.awarded OR orders.canceled_by_seller OR orders.canceled_by_buyer)\nAND\n orders.seller_user_id = ?\n;"
+    "query": "\nselect\n cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n cases\nLEFT JOIN\n bounties\nON\n cases.bounty_id = bounties.id\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nLEFT JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n not cases.paid\nAND\n case_buyer_user_id = ?\nGROUP BY\n cases.id\nORDER BY cases.created_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
   },
   "401779baa04da3f798e83717ec0da32bb106742601f00610e02296fa36dbd385": {
     "describe": {
@@ -1142,36 +1034,46 @@
     },
     "query": "\nDELETE FROM bounties\nWHERE user_id = ?\n;"
   },
-  "4fdbbf63eee6e31f49b76229e1bfca34f41f7748f9c51417c711460599b0aa20": {
+  "50d190a5470596b67f41deaf05b551ac5ef6c2df2c4c74433341e6671270d375": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\nDELETE FROM cases\nWHERE\n id = ?\nAND\n NOT paid\n;"
+  },
+  "5342753f118f92f7849d39f42fdd04d2d1d24b5e8d47de182958ee8607f6dd14": {
     "describe": {
       "columns": [
         {
-          "name": "order_id",
+          "name": "id",
           "ordinal": 0,
           "type_info": "Int64"
         },
         {
-          "name": "order_public_id",
+          "name": "public_id",
           "ordinal": 1,
           "type_info": "Text"
         },
         {
-          "name": "order_buyer_user_id",
+          "name": "buyer_user_id",
           "ordinal": 2,
           "type_info": "Int64"
         },
         {
-          "name": "order_seller_user_id",
+          "name": "seller_user_id",
           "ordinal": 3,
           "type_info": "Int64"
         },
         {
-          "name": "order_quantity",
+          "name": "quantity",
           "ordinal": 4,
           "type_info": "Int64"
         },
         {
-          "name": "order_bounty_id",
+          "name": "bounty_id",
           "ordinal": 5,
           "type_info": "Int64"
         },
@@ -1211,9 +1113,9 @@
           "type_info": "Bool"
         },
         {
-          "name": "order_reviewed",
+          "name": "invoice_payment_request",
           "ordinal": 13,
-          "type_info": "Bool"
+          "type_info": "Text"
         },
         {
           "name": "invoice_hash",
@@ -1221,7 +1123,7 @@
           "type_info": "Text"
         },
         {
-          "name": "invoice_payment_request",
+          "name": "review_text",
           "ordinal": 15,
           "type_info": "Text"
         },
@@ -1231,9 +1133,9 @@
           "type_info": "Int64"
         },
         {
-          "name": "review_text",
+          "name": "reviewed",
           "ordinal": 17,
-          "type_info": "Text"
+          "type_info": "Bool"
         },
         {
           "name": "created_time_ms",
@@ -1241,182 +1143,54 @@
           "type_info": "Int64"
         },
         {
-          "name": "payment_time_ms",
+          "name": "review_time_ms",
           "ordinal": 19,
           "type_info": "Int64"
         },
         {
-          "name": "review_time_ms",
+          "name": "payment_time_ms",
           "ordinal": 20,
           "type_info": "Int64"
-        },
-        {
-          "name": "id",
-          "ordinal": 21,
-          "type_info": "Int64"
-        },
-        {
-          "name": "bounty_public_id",
-          "ordinal": 22,
-          "type_info": "Text"
-        },
-        {
-          "name": "bounty_user_id",
-          "ordinal": 23,
-          "type_info": "Int64"
-        },
-        {
-          "name": "title",
-          "ordinal": 24,
-          "type_info": "Text"
-        },
-        {
-          "name": "description",
-          "ordinal": 25,
-          "type_info": "Text"
-        },
-        {
-          "name": "price_sat",
-          "ordinal": 26,
-          "type_info": "Int64"
-        },
-        {
-          "name": "fee_rate_basis_points",
-          "ordinal": 27,
-          "type_info": "Int64"
-        },
-        {
-          "name": "submitted",
-          "ordinal": 28,
-          "type_info": "Bool"
-        },
-        {
-          "name": "reviewed",
-          "ordinal": 29,
-          "type_info": "Bool"
-        },
-        {
-          "name": "approved",
-          "ordinal": 30,
-          "type_info": "Bool"
-        },
-        {
-          "name": "deactivated_by_seller",
-          "ordinal": 31,
-          "type_info": "Bool"
-        },
-        {
-          "name": "deactivated_by_admin",
-          "ordinal": 32,
-          "type_info": "Bool"
-        },
-        {
-          "name": "bounty_created_time_ms",
-          "ordinal": 33,
-          "type_info": "Int64"
-        },
-        {
-          "name": "image_id",
-          "ordinal": 34,
-          "type_info": "Int64"
-        },
-        {
-          "name": "image_public_id",
-          "ordinal": 35,
-          "type_info": "Text"
-        },
-        {
-          "name": "bounty_id",
-          "ordinal": 36,
-          "type_info": "Int64"
-        },
-        {
-          "name": "image_data",
-          "ordinal": 37,
-          "type_info": "Blob"
-        },
-        {
-          "name": "is_primary",
-          "ordinal": 38,
-          "type_info": "Bool"
-        },
-        {
-          "name": "rocket_auth_user_id",
-          "ordinal": 39,
-          "type_info": "Int64"
-        },
-        {
-          "name": "rocket_auth_user_username",
-          "ordinal": 40,
-          "type_info": "Text"
         }
       ],
       "nullable": [
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true
-      ],
-      "parameters": {
-        "Right": 3
-      }
-    },
-    "query": "\nselect\n orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n orders\nLEFT JOIN\n bounties\nON\n orders.bounty_id = bounties.id\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nLEFT JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n orders.awarded\nAND\n order_seller_user_id = ?\nGROUP BY\n orders.id\nORDER BY orders.payment_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
-  },
-  "506a715d6ca6157c9b48f0892946fd827423ba20b679c814ea5b8a3824f28f49": {
-    "describe": {
-      "columns": [
-        {
-          "name": "num_unpaid_orders",
-          "ordinal": 0,
-          "type_info": "Int"
-        }
-      ],
-      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
         false
       ],
       "parameters": {
         "Right": 1
       }
     },
-    "query": "\nselect\n COUNT(orders.id) as num_unpaid_orders\nfrom\n orders\nWHERE\n orders.buyer_user_id = ?\nAND\n NOT orders.paid\n;"
+    "query": "select * from cases WHERE public_id = ?;"
+  },
+  "53f79104ea803dab76008e4cbc4f14e41b996c7c1ad9bd3543a781564beec78d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\nUPDATE\n cases\nSET\n canceled_by_seller = true, case_details= ''\nWHERE\n id = ?\nAND\n not (awarded OR canceled_by_seller OR canceled_by_buyer)\n;"
   },
   "563327b79b50587da2b0343fc18832222d8d4ec28716f039e3c0cb2abbb10387": {
     "describe": {
@@ -1702,36 +1476,208 @@
     },
     "query": "INSERT INTO bountyimages (public_id, bounty_id, image_data, is_primary) VALUES (?, ?, ?, ?)"
   },
-  "5e8b6a2be9703ecc790e398c186e38e78d173d5215ba6db33d31798bda360d87": {
+  "5ff3bc42f0e3edc011d4ff2e6ce1f291f5e6aab377577da605c374552ce84e83": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 12
+      }
+    },
+    "query": "INSERT INTO bounties (public_id, user_id, title, description, price_sat, fee_rate_basis_points, submitted, reviewed, approved, deactivated_by_seller, deactivated_by_admin, created_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+  },
+  "6360a8381050e381216450a7298c127a2309e56e69fefde160b9cea083a9d88d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\nDELETE FROM bountyimages\nWHERE\n bounty_id IN\n(SELECT bounties.id FROM bounties\nWHERE user_id = ?);\n;"
+  },
+  "6362339e640dc1b48efbbfaca7572c8fb680492da0bfb7645869a4770d202482": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "UPDATE useraccounts SET disabled = false WHERE user_id = ?"
+  },
+  "67e21f61cf0224a9f49606ef1c49416eb9cfd0ec75b24837f4c381fed9fa7d5b": {
     "describe": {
       "columns": [
         {
-          "name": "order_id",
+          "name": "id",
           "ordinal": 0,
           "type_info": "Int64"
         },
         {
-          "name": "order_public_id",
+          "name": "public_id",
           "ordinal": 1,
           "type_info": "Text"
         },
         {
-          "name": "order_buyer_user_id",
+          "name": "user_id",
           "ordinal": 2,
           "type_info": "Int64"
         },
         {
-          "name": "order_seller_user_id",
+          "name": "title",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "description",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "price_sat",
+          "ordinal": 5,
+          "type_info": "Int64"
+        },
+        {
+          "name": "fee_rate_basis_points",
+          "ordinal": 6,
+          "type_info": "Int64"
+        },
+        {
+          "name": "submitted",
+          "ordinal": 7,
+          "type_info": "Bool"
+        },
+        {
+          "name": "reviewed",
+          "ordinal": 8,
+          "type_info": "Bool"
+        },
+        {
+          "name": "approved",
+          "ordinal": 9,
+          "type_info": "Bool"
+        },
+        {
+          "name": "deactivated_by_seller",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "deactivated_by_admin",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_time_ms",
+          "ordinal": 12,
+          "type_info": "Int64"
+        },
+        {
+          "name": "image_id",
+          "ordinal": 13,
+          "type_info": "Int64"
+        },
+        {
+          "name": "image_public_id",
+          "ordinal": 14,
+          "type_info": "Text"
+        },
+        {
+          "name": "bounty_id",
+          "ordinal": 15,
+          "type_info": "Int64"
+        },
+        {
+          "name": "image_data",
+          "ordinal": 16,
+          "type_info": "Blob"
+        },
+        {
+          "name": "is_primary",
+          "ordinal": 17,
+          "type_info": "Bool"
+        },
+        {
+          "name": "rocket_auth_user_id",
+          "ordinal": 18,
+          "type_info": "Int64"
+        },
+        {
+          "name": "rocket_auth_user_username",
+          "ordinal": 19,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "parameters": {
+        "Right": 2
+      }
+    },
+    "query": "\nselect\n bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n bounties\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nINNER JOIN\n users\nON\n bounties.user_id = users.id\nINNER JOIN\n useraccounts\nON\n bounties.user_id = useraccounts.user_id\nAND\n NOT useraccounts.disabled\nWHERE\n bounties.approved\nAND\n not (bounties.deactivated_by_seller OR bounties.deactivated_by_admin)\nGROUP BY\n bounties.id\nORDER BY bounties.created_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
+  },
+  "68516882dc3a16bda51ae38a238e7d2695b627df1fbb1455fdf046f3f956e008": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\nUPDATE\n cases\nSET\n canceled_by_buyer = true, case_details= ''\nWHERE\n id = ?\nAND\n not (awarded OR canceled_by_seller OR canceled_by_buyer)\n;"
+  },
+  "68c9c10f01366a7daf8f5f35af79e79b1b4ff83f337bcf986f61c86eb9531197": {
+    "describe": {
+      "columns": [
+        {
+          "name": "case_id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_public_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "case_buyer_user_id",
+          "ordinal": 2,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_seller_user_id",
           "ordinal": 3,
           "type_info": "Int64"
         },
         {
-          "name": "order_quantity",
+          "name": "case_quantity",
           "ordinal": 4,
           "type_info": "Int64"
         },
         {
-          "name": "order_bounty_id",
+          "name": "case_bounty_id",
           "ordinal": 5,
           "type_info": "Int64"
         },
@@ -1771,7 +1717,7 @@
           "type_info": "Bool"
         },
         {
-          "name": "order_reviewed",
+          "name": "case_reviewed",
           "ordinal": 13,
           "type_info": "Bool"
         },
@@ -1958,169 +1904,7 @@
         "Right": 3
       }
     },
-    "query": "\nselect\n orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n orders\nLEFT JOIN\n bounties\nON\n orders.bounty_id = bounties.id\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nLEFT JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n orders.paid\nAND\n order_buyer_user_id = ?\nGROUP BY\n orders.id\nORDER BY orders.payment_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
-  },
-  "5ff3bc42f0e3edc011d4ff2e6ce1f291f5e6aab377577da605c374552ce84e83": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 12
-      }
-    },
-    "query": "INSERT INTO bounties (public_id, user_id, title, description, price_sat, fee_rate_basis_points, submitted, reviewed, approved, deactivated_by_seller, deactivated_by_admin, created_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-  },
-  "6360a8381050e381216450a7298c127a2309e56e69fefde160b9cea083a9d88d": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "\nDELETE FROM bountyimages\nWHERE\n bounty_id IN\n(SELECT bounties.id FROM bounties\nWHERE user_id = ?);\n;"
-  },
-  "6362339e640dc1b48efbbfaca7572c8fb680492da0bfb7645869a4770d202482": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "UPDATE useraccounts SET disabled = false WHERE user_id = ?"
-  },
-  "67e21f61cf0224a9f49606ef1c49416eb9cfd0ec75b24837f4c381fed9fa7d5b": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int64"
-        },
-        {
-          "name": "public_id",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "user_id",
-          "ordinal": 2,
-          "type_info": "Int64"
-        },
-        {
-          "name": "title",
-          "ordinal": 3,
-          "type_info": "Text"
-        },
-        {
-          "name": "description",
-          "ordinal": 4,
-          "type_info": "Text"
-        },
-        {
-          "name": "price_sat",
-          "ordinal": 5,
-          "type_info": "Int64"
-        },
-        {
-          "name": "fee_rate_basis_points",
-          "ordinal": 6,
-          "type_info": "Int64"
-        },
-        {
-          "name": "submitted",
-          "ordinal": 7,
-          "type_info": "Bool"
-        },
-        {
-          "name": "reviewed",
-          "ordinal": 8,
-          "type_info": "Bool"
-        },
-        {
-          "name": "approved",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "deactivated_by_seller",
-          "ordinal": 10,
-          "type_info": "Bool"
-        },
-        {
-          "name": "deactivated_by_admin",
-          "ordinal": 11,
-          "type_info": "Bool"
-        },
-        {
-          "name": "created_time_ms",
-          "ordinal": 12,
-          "type_info": "Int64"
-        },
-        {
-          "name": "image_id",
-          "ordinal": 13,
-          "type_info": "Int64"
-        },
-        {
-          "name": "image_public_id",
-          "ordinal": 14,
-          "type_info": "Text"
-        },
-        {
-          "name": "bounty_id",
-          "ordinal": 15,
-          "type_info": "Int64"
-        },
-        {
-          "name": "image_data",
-          "ordinal": 16,
-          "type_info": "Blob"
-        },
-        {
-          "name": "is_primary",
-          "ordinal": 17,
-          "type_info": "Bool"
-        },
-        {
-          "name": "rocket_auth_user_id",
-          "ordinal": 18,
-          "type_info": "Int64"
-        },
-        {
-          "name": "rocket_auth_user_username",
-          "ordinal": 19,
-          "type_info": "Text"
-        }
-      ],
-      "nullable": [
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true,
-        true
-      ],
-      "parameters": {
-        "Right": 2
-      }
-    },
-    "query": "\nselect\n bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n bounties\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nINNER JOIN\n users\nON\n bounties.user_id = users.id\nINNER JOIN\n useraccounts\nON\n bounties.user_id = useraccounts.user_id\nAND\n NOT useraccounts.disabled\nWHERE\n bounties.approved\nAND\n not (bounties.deactivated_by_seller OR bounties.deactivated_by_admin)\nGROUP BY\n bounties.id\nORDER BY bounties.created_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
+    "query": "\nselect\n cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n cases\nLEFT JOIN\n bounties\nON\n cases.bounty_id = bounties.id\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nLEFT JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n cases.paid\nAND\n not (cases.awarded OR cases.canceled_by_seller OR cases.canceled_by_buyer)\nAND\n cases.seller_user_id = ?\nGROUP BY\n cases.id\nORDER BY cases.payment_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
   },
   "7797e71308f48df3d113a5b76c1a9e15e6d7877d4eaeef8ea7e175191d8460bb": {
     "describe": {
@@ -2206,6 +1990,24 @@
     },
     "query": "\nselect\n users.id as rocket_auth_user_id, users.email as rocket_auth_user_username, useraccounts.id as useraccounts_id, useraccounts.public_id as useraccounts_public_id, useraccounts.user_id as useraccounts_user_id, useraccounts.amount_owed_sat as useraccounts_amount_owed_sat, useraccounts.paid as useraccounts_paid, useraccounts.disabled as useraccounts_disabled, useraccounts.invoice_payment_request as useraccounts_invoice_payment_request, useraccounts.invoice_hash as useraccounts_invoice_hash, useraccounts.created_time_ms as useraccounts_created_time_ms, useraccounts.payment_time_ms as useraccounts_payment_time_ms\nfrom\n users\nINNER JOIN\n useraccounts\nON\n users.id = useraccounts.user_id\nWHERE\n useraccounts.paid\nAND\n NOT useraccounts.disabled\nGROUP BY\n users.id\nORDER BY useraccounts.created_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
   },
+  "78fa95491b341b6d09d6f304f46ab4735e5df66160342645196e08df280433f3": {
+    "describe": {
+      "columns": [
+        {
+          "name": "num_processing_cases",
+          "ordinal": 0,
+          "type_info": "Int"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\nselect\n COUNT(cases.id) as num_processing_cases\nfrom\n cases\nWHERE\n cases.paid\nAND\n not (cases.awarded OR cases.canceled_by_seller OR cases.canceled_by_buyer)\nAND\n cases.seller_user_id = ?\n;"
+  },
   "7a0050de10d11bf006391c43dac8abdf7b18678a44bc56df27e2643b539948a3": {
     "describe": {
       "columns": [
@@ -2277,16 +2079,6 @@
       }
     },
     "query": "select * from useraccounts WHERE public_id = ?;"
-  },
-  "7aa995f99e1e75cb24557e066425ae0de8971c7b56e2a67a54cd129e06ea57fc": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "\nUPDATE\n orders\nSET\n canceled_by_seller = true, case_details= ''\nWHERE\n id = ?\nAND\n not (awarded OR canceled_by_seller OR canceled_by_buyer)\n;"
   },
   "7b0d034a8114dd3cdfceadb9e360f2c7fc2705de90a56e1445e332efad2aed41": {
     "describe": {
@@ -2508,6 +2300,16 @@
     },
     "query": "UPDATE adminsettings SET market_name = ?"
   },
+  "885682dac517b1a319a2d333b061bd3e6e41ef63f496cea0929bcab1ec935741": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 4
+      }
+    },
+    "query": "\n        UPDATE\n         cases\n        SET\n         reviewed = true,\n         review_rating = ?,\n         review_text = ?,\n         review_time_ms = ?\n        WHERE\n         public_id = ?\n        ;"
+  },
   "8b31981437454097293102bc74e11e34606b97d470977197690a0769dcb6bd76": {
     "describe": {
       "columns": [],
@@ -2517,6 +2319,264 @@
       }
     },
     "query": "\nDELETE FROM useraccounts\nWHERE\n user_id = ?\nAND\n NOT paid\n;"
+  },
+  "9055869568ba4e606ff1c05d745a438c7da87b969955bf6c01628b40a6210afb": {
+    "describe": {
+      "columns": [
+        {
+          "name": "case_id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_public_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "case_buyer_user_id",
+          "ordinal": 2,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_seller_user_id",
+          "ordinal": 3,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_quantity",
+          "ordinal": 4,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_bounty_id",
+          "ordinal": 5,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_details",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "amount_owed_sat",
+          "ordinal": 7,
+          "type_info": "Int64"
+        },
+        {
+          "name": "seller_credit_sat",
+          "ordinal": 8,
+          "type_info": "Int64"
+        },
+        {
+          "name": "paid",
+          "ordinal": 9,
+          "type_info": "Bool"
+        },
+        {
+          "name": "awarded",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "canceled_by_seller",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "canceled_by_buyer",
+          "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "case_reviewed",
+          "ordinal": 13,
+          "type_info": "Bool"
+        },
+        {
+          "name": "invoice_hash",
+          "ordinal": 14,
+          "type_info": "Text"
+        },
+        {
+          "name": "invoice_payment_request",
+          "ordinal": 15,
+          "type_info": "Text"
+        },
+        {
+          "name": "review_rating",
+          "ordinal": 16,
+          "type_info": "Int64"
+        },
+        {
+          "name": "review_text",
+          "ordinal": 17,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_time_ms",
+          "ordinal": 18,
+          "type_info": "Int64"
+        },
+        {
+          "name": "payment_time_ms",
+          "ordinal": 19,
+          "type_info": "Int64"
+        },
+        {
+          "name": "review_time_ms",
+          "ordinal": 20,
+          "type_info": "Int64"
+        },
+        {
+          "name": "id",
+          "ordinal": 21,
+          "type_info": "Int64"
+        },
+        {
+          "name": "bounty_public_id",
+          "ordinal": 22,
+          "type_info": "Text"
+        },
+        {
+          "name": "bounty_user_id",
+          "ordinal": 23,
+          "type_info": "Int64"
+        },
+        {
+          "name": "title",
+          "ordinal": 24,
+          "type_info": "Text"
+        },
+        {
+          "name": "description",
+          "ordinal": 25,
+          "type_info": "Text"
+        },
+        {
+          "name": "price_sat",
+          "ordinal": 26,
+          "type_info": "Int64"
+        },
+        {
+          "name": "fee_rate_basis_points",
+          "ordinal": 27,
+          "type_info": "Int64"
+        },
+        {
+          "name": "submitted",
+          "ordinal": 28,
+          "type_info": "Bool"
+        },
+        {
+          "name": "reviewed",
+          "ordinal": 29,
+          "type_info": "Bool"
+        },
+        {
+          "name": "approved",
+          "ordinal": 30,
+          "type_info": "Bool"
+        },
+        {
+          "name": "deactivated_by_seller",
+          "ordinal": 31,
+          "type_info": "Bool"
+        },
+        {
+          "name": "deactivated_by_admin",
+          "ordinal": 32,
+          "type_info": "Bool"
+        },
+        {
+          "name": "bounty_created_time_ms",
+          "ordinal": 33,
+          "type_info": "Int64"
+        },
+        {
+          "name": "image_id",
+          "ordinal": 34,
+          "type_info": "Int64"
+        },
+        {
+          "name": "image_public_id",
+          "ordinal": 35,
+          "type_info": "Text"
+        },
+        {
+          "name": "bounty_id",
+          "ordinal": 36,
+          "type_info": "Int64"
+        },
+        {
+          "name": "image_data",
+          "ordinal": 37,
+          "type_info": "Blob"
+        },
+        {
+          "name": "is_primary",
+          "ordinal": 38,
+          "type_info": "Bool"
+        },
+        {
+          "name": "rocket_auth_user_id",
+          "ordinal": 39,
+          "type_info": "Int64"
+        },
+        {
+          "name": "rocket_auth_user_username",
+          "ordinal": 40,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "parameters": {
+        "Right": 3
+      }
+    },
+    "query": "\nselect\n cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n cases\nLEFT JOIN\n bounties\nON\n cases.bounty_id = bounties.id\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nLEFT JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n cases.paid\nAND\n case_buyer_user_id = ?\nGROUP BY\n cases.id\nORDER BY cases.payment_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
   },
   "95888610b35c9edb6b0105379cafc78f3752215f85adcbe4f18611545e5eb282": {
     "describe": {
@@ -2674,15 +2734,263 @@
     },
     "query": "\nselect\n bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n bounties\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nINNER JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n bounties.submitted\nAND\n NOT bounties.reviewed\nGROUP BY\n bounties.id\nORDER BY bounties.created_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
   },
-  "99fc923cfcaf37062a5e027062bfc85bc70de90eabac087c447993f5383b1123": {
+  "99a8728eb5c2a869e796d5137cc70397c7e450ce97c59096a084b8249019323a": {
     "describe": {
-      "columns": [],
-      "nullable": [],
+      "columns": [
+        {
+          "name": "case_id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_public_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "case_buyer_user_id",
+          "ordinal": 2,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_seller_user_id",
+          "ordinal": 3,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_quantity",
+          "ordinal": 4,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_bounty_id",
+          "ordinal": 5,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_details",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "amount_owed_sat",
+          "ordinal": 7,
+          "type_info": "Int64"
+        },
+        {
+          "name": "seller_credit_sat",
+          "ordinal": 8,
+          "type_info": "Int64"
+        },
+        {
+          "name": "paid",
+          "ordinal": 9,
+          "type_info": "Bool"
+        },
+        {
+          "name": "awarded",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "canceled_by_seller",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "canceled_by_buyer",
+          "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "case_reviewed",
+          "ordinal": 13,
+          "type_info": "Bool"
+        },
+        {
+          "name": "invoice_hash",
+          "ordinal": 14,
+          "type_info": "Text"
+        },
+        {
+          "name": "invoice_payment_request",
+          "ordinal": 15,
+          "type_info": "Text"
+        },
+        {
+          "name": "review_rating",
+          "ordinal": 16,
+          "type_info": "Int64"
+        },
+        {
+          "name": "review_text",
+          "ordinal": 17,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_time_ms",
+          "ordinal": 18,
+          "type_info": "Int64"
+        },
+        {
+          "name": "payment_time_ms",
+          "ordinal": 19,
+          "type_info": "Int64"
+        },
+        {
+          "name": "review_time_ms",
+          "ordinal": 20,
+          "type_info": "Int64"
+        },
+        {
+          "name": "id",
+          "ordinal": 21,
+          "type_info": "Int64"
+        },
+        {
+          "name": "bounty_public_id",
+          "ordinal": 22,
+          "type_info": "Text"
+        },
+        {
+          "name": "bounty_user_id",
+          "ordinal": 23,
+          "type_info": "Int64"
+        },
+        {
+          "name": "title",
+          "ordinal": 24,
+          "type_info": "Text"
+        },
+        {
+          "name": "description",
+          "ordinal": 25,
+          "type_info": "Text"
+        },
+        {
+          "name": "price_sat",
+          "ordinal": 26,
+          "type_info": "Int64"
+        },
+        {
+          "name": "fee_rate_basis_points",
+          "ordinal": 27,
+          "type_info": "Int64"
+        },
+        {
+          "name": "submitted",
+          "ordinal": 28,
+          "type_info": "Bool"
+        },
+        {
+          "name": "reviewed",
+          "ordinal": 29,
+          "type_info": "Bool"
+        },
+        {
+          "name": "approved",
+          "ordinal": 30,
+          "type_info": "Bool"
+        },
+        {
+          "name": "deactivated_by_seller",
+          "ordinal": 31,
+          "type_info": "Bool"
+        },
+        {
+          "name": "deactivated_by_admin",
+          "ordinal": 32,
+          "type_info": "Bool"
+        },
+        {
+          "name": "bounty_created_time_ms",
+          "ordinal": 33,
+          "type_info": "Int64"
+        },
+        {
+          "name": "image_id",
+          "ordinal": 34,
+          "type_info": "Int64"
+        },
+        {
+          "name": "image_public_id",
+          "ordinal": 35,
+          "type_info": "Text"
+        },
+        {
+          "name": "bounty_id",
+          "ordinal": 36,
+          "type_info": "Int64"
+        },
+        {
+          "name": "image_data",
+          "ordinal": 37,
+          "type_info": "Blob"
+        },
+        {
+          "name": "is_primary",
+          "ordinal": 38,
+          "type_info": "Bool"
+        },
+        {
+          "name": "rocket_auth_user_id",
+          "ordinal": 39,
+          "type_info": "Int64"
+        },
+        {
+          "name": "rocket_auth_user_username",
+          "ordinal": 40,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "parameters": {
-        "Right": 20
+        "Right": 3
       }
     },
-    "query": "INSERT INTO orders (public_id, buyer_user_id, seller_user_id, quantity, bounty_id, case_details, amount_owed_sat, seller_credit_sat, paid, awarded, canceled_by_seller, canceled_by_buyer, reviewed, review_text, review_rating, invoice_hash, invoice_payment_request, created_time_ms, payment_time_ms, review_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "query": "\nselect\n cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n cases\nLEFT JOIN\n bounties\nON\n cases.bounty_id = bounties.id\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nLEFT JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n cases.awarded\nAND\n case_seller_user_id = ?\nGROUP BY\n cases.id\nORDER BY cases.payment_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
   },
   "9bc3678b8afee690bba017f738ff2d3dae64018b6dc91bee75ce2eb56fa67f0b": {
     "describe": {
@@ -2816,144 +3124,6 @@
     },
     "query": "\nselect\n bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username\nfrom\n bounties\nLEFT JOIN\n bountyimages\nON\n bounties.id = bountyimages.bounty_id\nAND\n bountyimages.is_primary = (SELECT MAX(is_primary) FROM bountyimages WHERE bounty_id = bounties.id)\nINNER JOIN\n users\nON\n bounties.user_id = users.id\nWHERE\n bounties.submitted\nAND\n not bounties.reviewed\nAND\n users.id = ?\nGROUP BY\n bounties.id\nORDER BY bounties.created_time_ms DESC\nLIMIT ?\nOFFSET ?\n;"
   },
-  "9d8fdfcc0e6acb32f7c077a29feba40d8d3d5eb697573ddd6a5163fc7eedec0b": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int64"
-        },
-        {
-          "name": "public_id",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "buyer_user_id",
-          "ordinal": 2,
-          "type_info": "Int64"
-        },
-        {
-          "name": "seller_user_id",
-          "ordinal": 3,
-          "type_info": "Int64"
-        },
-        {
-          "name": "quantity",
-          "ordinal": 4,
-          "type_info": "Int64"
-        },
-        {
-          "name": "bounty_id",
-          "ordinal": 5,
-          "type_info": "Int64"
-        },
-        {
-          "name": "case_details",
-          "ordinal": 6,
-          "type_info": "Text"
-        },
-        {
-          "name": "amount_owed_sat",
-          "ordinal": 7,
-          "type_info": "Int64"
-        },
-        {
-          "name": "seller_credit_sat",
-          "ordinal": 8,
-          "type_info": "Int64"
-        },
-        {
-          "name": "paid",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "awarded",
-          "ordinal": 10,
-          "type_info": "Bool"
-        },
-        {
-          "name": "canceled_by_seller",
-          "ordinal": 11,
-          "type_info": "Bool"
-        },
-        {
-          "name": "canceled_by_buyer",
-          "ordinal": 12,
-          "type_info": "Bool"
-        },
-        {
-          "name": "invoice_payment_request",
-          "ordinal": 13,
-          "type_info": "Text"
-        },
-        {
-          "name": "invoice_hash",
-          "ordinal": 14,
-          "type_info": "Text"
-        },
-        {
-          "name": "review_text",
-          "ordinal": 15,
-          "type_info": "Text"
-        },
-        {
-          "name": "review_rating",
-          "ordinal": 16,
-          "type_info": "Int64"
-        },
-        {
-          "name": "reviewed",
-          "ordinal": 17,
-          "type_info": "Bool"
-        },
-        {
-          "name": "created_time_ms",
-          "ordinal": 18,
-          "type_info": "Int64"
-        },
-        {
-          "name": "review_time_ms",
-          "ordinal": 19,
-          "type_info": "Int64"
-        },
-        {
-          "name": "payment_time_ms",
-          "ordinal": 20,
-          "type_info": "Int64"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "\nselect *\nfrom\n orders\nWHERE\n created_time_ms < ?\nAND\n NOT paid\n;"
-  },
   "9dd7bf9e971edc81b99d1d329acfddeda496abc66d282a60e07058102b149ff2": {
     "describe": {
       "columns": [
@@ -3008,144 +3178,6 @@
     },
     "query": "select * from withdrawals WHERE public_id = ?;"
   },
-  "9f750d8f8878af49e58287113724192c2c17b361e7411cdf2a848a7a87526613": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int64"
-        },
-        {
-          "name": "public_id",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "buyer_user_id",
-          "ordinal": 2,
-          "type_info": "Int64"
-        },
-        {
-          "name": "seller_user_id",
-          "ordinal": 3,
-          "type_info": "Int64"
-        },
-        {
-          "name": "quantity",
-          "ordinal": 4,
-          "type_info": "Int64"
-        },
-        {
-          "name": "bounty_id",
-          "ordinal": 5,
-          "type_info": "Int64"
-        },
-        {
-          "name": "case_details",
-          "ordinal": 6,
-          "type_info": "Text"
-        },
-        {
-          "name": "amount_owed_sat",
-          "ordinal": 7,
-          "type_info": "Int64"
-        },
-        {
-          "name": "seller_credit_sat",
-          "ordinal": 8,
-          "type_info": "Int64"
-        },
-        {
-          "name": "paid",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "awarded",
-          "ordinal": 10,
-          "type_info": "Bool"
-        },
-        {
-          "name": "canceled_by_seller",
-          "ordinal": 11,
-          "type_info": "Bool"
-        },
-        {
-          "name": "canceled_by_buyer",
-          "ordinal": 12,
-          "type_info": "Bool"
-        },
-        {
-          "name": "invoice_payment_request",
-          "ordinal": 13,
-          "type_info": "Text"
-        },
-        {
-          "name": "invoice_hash",
-          "ordinal": 14,
-          "type_info": "Text"
-        },
-        {
-          "name": "review_text",
-          "ordinal": 15,
-          "type_info": "Text"
-        },
-        {
-          "name": "review_rating",
-          "ordinal": 16,
-          "type_info": "Int64"
-        },
-        {
-          "name": "reviewed",
-          "ordinal": 17,
-          "type_info": "Bool"
-        },
-        {
-          "name": "created_time_ms",
-          "ordinal": 18,
-          "type_info": "Int64"
-        },
-        {
-          "name": "review_time_ms",
-          "ordinal": 19,
-          "type_info": "Int64"
-        },
-        {
-          "name": "payment_time_ms",
-          "ordinal": 20,
-          "type_info": "Int64"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "select * from orders WHERE invoice_hash = ?;"
-  },
   "a23e24a2034f94d13544803757509fb0530ffd5edf2d751790d3b1f903ea4d4d": {
     "describe": {
       "columns": [],
@@ -3155,144 +3187,6 @@
       }
     },
     "query": "\nUPDATE bounties\nSET deactivated_by_seller = true\nWHERE\n public_id = ?\nAND\n approved\nAND NOT (deactivated_by_seller OR deactivated_by_admin)\n;"
-  },
-  "a3b1aa9c6618dbe99226d9412013fdd52cfbde6a22c19d1c26959f23ddacce2f": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int64"
-        },
-        {
-          "name": "public_id",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "buyer_user_id",
-          "ordinal": 2,
-          "type_info": "Int64"
-        },
-        {
-          "name": "seller_user_id",
-          "ordinal": 3,
-          "type_info": "Int64"
-        },
-        {
-          "name": "quantity",
-          "ordinal": 4,
-          "type_info": "Int64"
-        },
-        {
-          "name": "bounty_id",
-          "ordinal": 5,
-          "type_info": "Int64"
-        },
-        {
-          "name": "case_details",
-          "ordinal": 6,
-          "type_info": "Text"
-        },
-        {
-          "name": "amount_owed_sat",
-          "ordinal": 7,
-          "type_info": "Int64"
-        },
-        {
-          "name": "seller_credit_sat",
-          "ordinal": 8,
-          "type_info": "Int64"
-        },
-        {
-          "name": "paid",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "awarded",
-          "ordinal": 10,
-          "type_info": "Bool"
-        },
-        {
-          "name": "canceled_by_seller",
-          "ordinal": 11,
-          "type_info": "Bool"
-        },
-        {
-          "name": "canceled_by_buyer",
-          "ordinal": 12,
-          "type_info": "Bool"
-        },
-        {
-          "name": "invoice_payment_request",
-          "ordinal": 13,
-          "type_info": "Text"
-        },
-        {
-          "name": "invoice_hash",
-          "ordinal": 14,
-          "type_info": "Text"
-        },
-        {
-          "name": "review_text",
-          "ordinal": 15,
-          "type_info": "Text"
-        },
-        {
-          "name": "review_rating",
-          "ordinal": 16,
-          "type_info": "Int64"
-        },
-        {
-          "name": "reviewed",
-          "ordinal": 17,
-          "type_info": "Bool"
-        },
-        {
-          "name": "created_time_ms",
-          "ordinal": 18,
-          "type_info": "Int64"
-        },
-        {
-          "name": "review_time_ms",
-          "ordinal": 19,
-          "type_info": "Int64"
-        },
-        {
-          "name": "payment_time_ms",
-          "ordinal": 20,
-          "type_info": "Int64"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "select * from orders WHERE public_id = ?;"
   },
   "a4104b4d29b91b0f7915eba98663d39675b9306c47e3d095fc46727ea6cff776": {
     "describe": {
@@ -3324,16 +3218,6 @@
     },
     "query": "INSERT INTO withdrawals (public_id, user_id, amount_sat, invoice_hash, invoice_payment_request, created_time_ms) VALUES (?, ?, ?, ?, ?, ?)"
   },
-  "ad1da0e7c7f2a47210a6cf537dd763b4436d34762bdf3f3cddecc28c5a380f77": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "\nUPDATE\n orders\nSET\n canceled_by_buyer = true, case_details= ''\nWHERE\n id = ?\nAND\n not (awarded OR canceled_by_seller OR canceled_by_buyer)\n;"
-  },
   "b05ea8c37a0a37b2b9487152647e42c0350b8b132db5929cc6645f157e6e7a81": {
     "describe": {
       "columns": [],
@@ -3343,16 +3227,6 @@
       }
     },
     "query": "INSERT INTO useraccounts (public_id, user_id, amount_owed_sat, paid, disabled, invoice_payment_request, invoice_hash, created_time_ms, payment_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-  },
-  "b23841e1a92436bf56b1447d3165e6a4996a4908ce38d9f796153b593504c7a7": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "\nDELETE FROM orders\nWHERE\n id = ?\nAND\n NOT paid\n;"
   },
   "b4719ca5e7affda434d01be2da8d45ccd375d7ea3a95b364f541f8fbb7b1af39": {
     "describe": {
@@ -3390,23 +3264,23 @@
     },
     "query": "\nselect count(id) as withdrawal_count from withdrawals\nWHERE\n user_id = ?\nAND\n created_time_ms > ?\nORDER BY withdrawals.created_time_ms ASC;"
   },
-  "b76de8f341da55e0ebd2f7a7faf256f9be6feb7d5e47885ecb29cee40bbe21e9": {
+  "b931f8b06586be3008832b508d25e1e0b0eee87517d52b0b86e973a56b50e727": {
     "describe": {
       "columns": [
         {
-          "name": "invoice_hash",
+          "name": "num_unpaid_cases",
           "ordinal": 0,
-          "type_info": "Text"
+          "type_info": "Int"
         }
       ],
       "nullable": [
         false
       ],
       "parameters": {
-        "Right": 0
+        "Right": 1
       }
     },
-    "query": "\nSELECT\n invoice_hash\nFROM\n(SELECT invoice_hash, payment_time_ms FROM useraccounts\n UNION ALL\nSELECT invoice_hash, payment_time_ms FROM orders)\nWHERE\n payment_time_ms = (SELECT MAX(payment_time_ms) FROM\n(SELECT invoice_hash, payment_time_ms FROM useraccounts\n UNION ALL\nSELECT invoice_hash, payment_time_ms FROM orders))\nLIMIT 1\n;"
+    "query": "\nselect\n COUNT(cases.id) as num_unpaid_cases\nfrom\n cases\nWHERE\n cases.buyer_user_id = ?\nAND\n NOT cases.paid\n;"
   },
   "be99d8673183a949c574c4f6ad6dbdc625755f69f860876ee64737ffbb1a9bbf": {
     "describe": {
@@ -3455,6 +3329,144 @@
       }
     },
     "query": "select * from adminsettings;"
+  },
+  "beac1e7f18725b9a28f054d1324f686728210f978ed498d1733575b09ac6c2d1": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "public_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "buyer_user_id",
+          "ordinal": 2,
+          "type_info": "Int64"
+        },
+        {
+          "name": "seller_user_id",
+          "ordinal": 3,
+          "type_info": "Int64"
+        },
+        {
+          "name": "quantity",
+          "ordinal": 4,
+          "type_info": "Int64"
+        },
+        {
+          "name": "bounty_id",
+          "ordinal": 5,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_details",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "amount_owed_sat",
+          "ordinal": 7,
+          "type_info": "Int64"
+        },
+        {
+          "name": "seller_credit_sat",
+          "ordinal": 8,
+          "type_info": "Int64"
+        },
+        {
+          "name": "paid",
+          "ordinal": 9,
+          "type_info": "Bool"
+        },
+        {
+          "name": "awarded",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "canceled_by_seller",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "canceled_by_buyer",
+          "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "invoice_payment_request",
+          "ordinal": 13,
+          "type_info": "Text"
+        },
+        {
+          "name": "invoice_hash",
+          "ordinal": 14,
+          "type_info": "Text"
+        },
+        {
+          "name": "review_text",
+          "ordinal": 15,
+          "type_info": "Text"
+        },
+        {
+          "name": "review_rating",
+          "ordinal": 16,
+          "type_info": "Int64"
+        },
+        {
+          "name": "reviewed",
+          "ordinal": 17,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_time_ms",
+          "ordinal": 18,
+          "type_info": "Int64"
+        },
+        {
+          "name": "review_time_ms",
+          "ordinal": 19,
+          "type_info": "Int64"
+        },
+        {
+          "name": "payment_time_ms",
+          "ordinal": 20,
+          "type_info": "Int64"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "select * from cases WHERE invoice_hash = ?;"
   },
   "c08c9b70c1af03a3aaa0a00d41467e760b97b39954476196648773166275797b": {
     "describe": {
@@ -3527,6 +3539,24 @@
       }
     },
     "query": "\nselect *\nfrom\n useraccounts\nWHERE\n created_time_ms < ?\nAND\n NOT paid\n;"
+  },
+  "c0f5bb99ab97dd0be5e2ab02a85db9de12d737f74d6515a3c41afe7a9e8e229f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "invoice_hash",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "\nSELECT\n invoice_hash\nFROM\n(SELECT invoice_hash, payment_time_ms FROM useraccounts\n UNION ALL\nSELECT invoice_hash, payment_time_ms FROM cases)\nWHERE\n payment_time_ms = (SELECT MAX(payment_time_ms) FROM\n(SELECT invoice_hash, payment_time_ms FROM useraccounts\n UNION ALL\nSELECT invoice_hash, payment_time_ms FROM cases))\nLIMIT 1\n;"
   },
   "c1a5ec22fbc377e9efe1b4c14879e0d86cca3f47e3ce689c7eeb761a596d3fd4": {
     "describe": {
@@ -3609,16 +3639,6 @@
       }
     },
     "query": "UPDATE useraccounts SET paid = true, payment_time_ms = ? WHERE id = ?"
-  },
-  "d071f19567ccc606eee005bce9d3f889ef1c49df909432195006bd7c3d9197fa": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 4
-      }
-    },
-    "query": "\n        UPDATE\n         orders\n        SET\n         reviewed = true,\n         review_rating = ?,\n         review_text = ?,\n         review_time_ms = ?\n        WHERE\n         public_id = ?\n        ;"
   },
   "d38ce5929304ae9bceb6df62d861379a1b5e31433a968fdf1377bdc51ee96683": {
     "describe": {
@@ -3792,6 +3812,144 @@
     },
     "query": "UPDATE useraccounts SET disabled = true WHERE user_id = ?"
   },
+  "e99d8c9d5970e577309d169f639cc3e66c99703fd53601cfbe80361ef18ba95b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int64"
+        },
+        {
+          "name": "public_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "buyer_user_id",
+          "ordinal": 2,
+          "type_info": "Int64"
+        },
+        {
+          "name": "seller_user_id",
+          "ordinal": 3,
+          "type_info": "Int64"
+        },
+        {
+          "name": "quantity",
+          "ordinal": 4,
+          "type_info": "Int64"
+        },
+        {
+          "name": "bounty_id",
+          "ordinal": 5,
+          "type_info": "Int64"
+        },
+        {
+          "name": "case_details",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "amount_owed_sat",
+          "ordinal": 7,
+          "type_info": "Int64"
+        },
+        {
+          "name": "seller_credit_sat",
+          "ordinal": 8,
+          "type_info": "Int64"
+        },
+        {
+          "name": "paid",
+          "ordinal": 9,
+          "type_info": "Bool"
+        },
+        {
+          "name": "awarded",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "canceled_by_seller",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "canceled_by_buyer",
+          "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "invoice_payment_request",
+          "ordinal": 13,
+          "type_info": "Text"
+        },
+        {
+          "name": "invoice_hash",
+          "ordinal": 14,
+          "type_info": "Text"
+        },
+        {
+          "name": "review_text",
+          "ordinal": 15,
+          "type_info": "Text"
+        },
+        {
+          "name": "review_rating",
+          "ordinal": 16,
+          "type_info": "Int64"
+        },
+        {
+          "name": "reviewed",
+          "ordinal": 17,
+          "type_info": "Bool"
+        },
+        {
+          "name": "created_time_ms",
+          "ordinal": 18,
+          "type_info": "Int64"
+        },
+        {
+          "name": "review_time_ms",
+          "ordinal": 19,
+          "type_info": "Int64"
+        },
+        {
+          "name": "payment_time_ms",
+          "ordinal": 20,
+          "type_info": "Int64"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\nselect *\nfrom\n cases\nWHERE\n created_time_ms < ?\nAND\n NOT paid\n;"
+  },
   "f21cca0eeb7fa720667ba7f778e7d1502c5bf840a51322f5fcefe4b07426a3ae": {
     "describe": {
       "columns": [
@@ -3947,164 +4105,6 @@
       }
     },
     "query": "select id, email from users WHERE email = ?;"
-  },
-  "f44873e4e5056a773b2fa1b23b8d4fadc404561e555eeeddb75acdd3e0b213d3": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int64"
-        },
-        {
-          "name": "public_id",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "buyer_user_id",
-          "ordinal": 2,
-          "type_info": "Int64"
-        },
-        {
-          "name": "seller_user_id",
-          "ordinal": 3,
-          "type_info": "Int64"
-        },
-        {
-          "name": "quantity",
-          "ordinal": 4,
-          "type_info": "Int64"
-        },
-        {
-          "name": "bounty_id",
-          "ordinal": 5,
-          "type_info": "Int64"
-        },
-        {
-          "name": "case_details",
-          "ordinal": 6,
-          "type_info": "Text"
-        },
-        {
-          "name": "amount_owed_sat",
-          "ordinal": 7,
-          "type_info": "Int64"
-        },
-        {
-          "name": "seller_credit_sat",
-          "ordinal": 8,
-          "type_info": "Int64"
-        },
-        {
-          "name": "paid",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "awarded",
-          "ordinal": 10,
-          "type_info": "Bool"
-        },
-        {
-          "name": "canceled_by_seller",
-          "ordinal": 11,
-          "type_info": "Bool"
-        },
-        {
-          "name": "canceled_by_buyer",
-          "ordinal": 12,
-          "type_info": "Bool"
-        },
-        {
-          "name": "invoice_payment_request",
-          "ordinal": 13,
-          "type_info": "Text"
-        },
-        {
-          "name": "invoice_hash",
-          "ordinal": 14,
-          "type_info": "Text"
-        },
-        {
-          "name": "review_text",
-          "ordinal": 15,
-          "type_info": "Text"
-        },
-        {
-          "name": "review_rating",
-          "ordinal": 16,
-          "type_info": "Int64"
-        },
-        {
-          "name": "reviewed",
-          "ordinal": 17,
-          "type_info": "Bool"
-        },
-        {
-          "name": "created_time_ms",
-          "ordinal": 18,
-          "type_info": "Int64"
-        },
-        {
-          "name": "review_time_ms",
-          "ordinal": 19,
-          "type_info": "Int64"
-        },
-        {
-          "name": "payment_time_ms",
-          "ordinal": 20,
-          "type_info": "Int64"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "select * from orders WHERE id = ?;"
-  },
-  "f7e792f332ae7d9f24fcaa281a8dc53c3bef7d37f15545b26dcffe1e7f78b68a": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 2
-      }
-    },
-    "query": "UPDATE orders SET paid = true, payment_time_ms = ? WHERE id = ?"
-  },
-  "f85ec554ad7ad512428294da474680829937d50742cc1bcceca9265231c82a53": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 1
-      }
-    },
-    "query": "\nUPDATE\n orders\nSET\n awarded = true, case_details= ''\nWHERE\n id = ?\nAND\n paid\nAND\n not (awarded OR canceled_by_seller OR canceled_by_buyer)\n;"
   },
   "f8f0d2cd5d3c924cac51ffe3c1878b1b0da428890e84df521965b136614cc3ae": {
     "describe": {

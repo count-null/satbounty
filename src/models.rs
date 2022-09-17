@@ -138,7 +138,7 @@ pub struct MaxAllowedUsersInput {
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct Order {
+pub struct Case {
     pub id: Option<i32>,
     pub public_id: String,
     pub quantity: u32,
@@ -163,15 +163,15 @@ pub struct Order {
 }
 
 #[derive(Debug, FromForm, Clone)]
-pub struct OrderInfo {
+pub struct CaseInfo {
     pub quantity: Option<u32>,
     pub case_details: String,
 }
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
-pub struct OrderCard {
-    pub order: Order,
+pub struct CaseCard {
+    pub case: Case,
     pub bounty: Option<Bounty>,
     pub image: Option<BountyImage>,
     pub user: Option<RocketAuthUser>,
@@ -181,7 +181,7 @@ pub struct OrderCard {
 #[serde(crate = "rocket::serde")]
 pub struct AccountInfo {
     pub account_balance_sat: i64,
-    pub num_unawarded_orders: u32,
+    pub num_unawarded_cases: u32,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -697,7 +697,7 @@ impl BountyCard {
         // Example query for this kind of join/group by: https://stackoverflow.com/a/63037790/1639564
         // Other example query: https://stackoverflow.com/a/13698334/1639564
         // TODO: change WHERE condition to use dynamically calculated remaining quantity
-        // based on number of awarded orders.
+        // based on number of awarded cases.
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
         let bounty_cards =
@@ -1748,18 +1748,18 @@ WHERE NOT EXISTS(SELECT 1 FROM usersettings WHERE user_id = ?)
     }
 }
 
-impl Order {
+impl Case {
     /// Returns the id of the inserted row.
     pub async fn insert(
-        order: Order,
-        max_unpaid_orders: u32,
+        case: Case,
+        max_unpaid_cases: u32,
         db: &mut Connection<Db>,
     ) -> Result<i32, String> {
-        let amount_owed_sat: i64 = order.amount_owed_sat.try_into().unwrap();
-        let seller_credit_sat: i64 = order.seller_credit_sat.try_into().unwrap();
-        let created_time_ms: i64 = order.created_time_ms.try_into().unwrap();
-        let payment_time_ms: i64 = order.payment_time_ms.try_into().unwrap();
-        let review_time_ms: i64 = order.review_time_ms.try_into().unwrap();
+        let amount_owed_sat: i64 = case.amount_owed_sat.try_into().unwrap();
+        let seller_credit_sat: i64 = case.seller_credit_sat.try_into().unwrap();
+        let created_time_ms: i64 = case.created_time_ms.try_into().unwrap();
+        let payment_time_ms: i64 = case.payment_time_ms.try_into().unwrap();
+        let review_time_ms: i64 = case.review_time_ms.try_into().unwrap();
 
         let mut tx = db
             .begin()
@@ -1767,54 +1767,54 @@ impl Order {
             .map_err(|_| "failed to begin transaction.")?;
 
         let insert_result = sqlx::query!(
-            "INSERT INTO orders (public_id, buyer_user_id, seller_user_id, quantity, bounty_id, case_details, amount_owed_sat, seller_credit_sat, paid, awarded, canceled_by_seller, canceled_by_buyer, reviewed, review_text, review_rating, invoice_hash, invoice_payment_request, created_time_ms, payment_time_ms, review_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            order.public_id,
-            order.buyer_user_id,
-            order.seller_user_id,
-            order.quantity,
-            order.bounty_id,
-            order.case_details,
+            "INSERT INTO cases (public_id, buyer_user_id, seller_user_id, quantity, bounty_id, case_details, amount_owed_sat, seller_credit_sat, paid, awarded, canceled_by_seller, canceled_by_buyer, reviewed, review_text, review_rating, invoice_hash, invoice_payment_request, created_time_ms, payment_time_ms, review_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            case.public_id,
+            case.buyer_user_id,
+            case.seller_user_id,
+            case.quantity,
+            case.bounty_id,
+            case.case_details,
             amount_owed_sat,
             seller_credit_sat,
-            order.paid,
-            order.awarded,
-            order.canceled_by_seller,
-            order.canceled_by_buyer,
-            order.reviewed,
-            order.review_text,
-            order.review_rating,
-            order.invoice_hash,
-            order.invoice_payment_request,
+            case.paid,
+            case.awarded,
+            case.canceled_by_seller,
+            case.canceled_by_buyer,
+            case.reviewed,
+            case.review_text,
+            case.review_rating,
+            case.invoice_hash,
+            case.invoice_payment_request,
             created_time_ms,
             payment_time_ms,
             review_time_ms,
         )
             .execute(&mut *tx)
             .await
-            .map_err(|_| "failed to insert order.")?;
+            .map_err(|_| "failed to insert case.")?;
 
-        let num_unpaid_orders = sqlx::query!(
+        let num_unpaid_cases = sqlx::query!(
             "
 select
- COUNT(orders.id) as num_unpaid_orders
+ COUNT(cases.id) as num_unpaid_cases
 from
- orders
+ cases
 WHERE
- orders.buyer_user_id = ?
+ cases.buyer_user_id = ?
 AND
- NOT orders.paid
+ NOT cases.paid
 ;",
-            order.buyer_user_id,
+            case.buyer_user_id,
         )
         .fetch_one(&mut *tx)
-        .map_ok(|r| r.num_unpaid_orders as u32)
+        .map_ok(|r| r.num_unpaid_cases as u32)
         .await
-        .map_err(|_| "failed to get count of unpaid orders for buyer.")?;
+        .map_err(|_| "failed to get count of unpaid cases for buyer.")?;
 
-        if num_unpaid_orders > max_unpaid_orders {
+        if num_unpaid_cases > max_unpaid_cases {
             return Err(format!(
-                "more than {:?} unpaid orders not allowed.",
-                max_unpaid_orders,
+                "more than {:?} unpaid cases not allowed.",
+                max_unpaid_cases,
             ));
         }
 
@@ -1825,11 +1825,11 @@ AND
         Ok(insert_result.last_insert_rowid() as _)
     }
 
-    /// Sets a new review for a given order.
+    /// Sets a new review for a given case.
     ///
     /// Sets the "review_time_ms" field to current time if this is the first review.
     /// Otherwise, keeps the existing value for "review_time_ms"
-    pub async fn set_order_review(
+    pub async fn set_case_review(
         db: &mut Connection<Db>,
         public_id: &str,
         review_rating: u32,
@@ -1841,7 +1841,7 @@ AND
         sqlx::query!(
             "
         UPDATE
-         orders
+         cases
         SET
          reviewed = true,
          review_rating = ?,
@@ -1861,10 +1861,10 @@ AND
         Ok(())
     }
 
-    pub async fn single(db: &mut Connection<Db>, id: i32) -> Result<Order, sqlx::Error> {
-        let order = sqlx::query!("select * from orders WHERE id = ?;", id)
+    pub async fn single(db: &mut Connection<Db>, id: i32) -> Result<Case, sqlx::Error> {
+        let case = sqlx::query!("select * from cases WHERE id = ?;", id)
             .fetch_one(&mut **db)
-            .map_ok(|r| Order {
+            .map_ok(|r| Case {
                 id: Some(r.id.try_into().unwrap()),
                 public_id: r.public_id,
                 quantity: r.quantity.try_into().unwrap(),
@@ -1889,16 +1889,16 @@ AND
             })
             .await?;
 
-        Ok(order)
+        Ok(case)
     }
 
     pub async fn single_by_public_id(
         db: &mut Connection<Db>,
         public_id: &str,
-    ) -> Result<Order, sqlx::Error> {
-        let order = sqlx::query!("select * from orders WHERE public_id = ?;", public_id)
+    ) -> Result<Case, sqlx::Error> {
+        let case = sqlx::query!("select * from cases WHERE public_id = ?;", public_id)
             .fetch_one(&mut **db)
-            .map_ok(|r| Order {
+            .map_ok(|r| Case {
                 id: Some(r.id.try_into().unwrap()),
                 public_id: r.public_id,
                 quantity: r.quantity.try_into().unwrap(),
@@ -1923,16 +1923,16 @@ AND
             })
             .await?;
 
-        Ok(order)
+        Ok(case)
     }
 
     pub async fn single_by_invoice_hash(
         db: &mut PoolConnection<Sqlite>,
         invoice_hash: &str,
-    ) -> Result<Order, sqlx::Error> {
-        let order = sqlx::query!("select * from orders WHERE invoice_hash = ?;", invoice_hash)
+    ) -> Result<Case, sqlx::Error> {
+        let case = sqlx::query!("select * from cases WHERE invoice_hash = ?;", invoice_hash)
             .fetch_one(&mut **db)
-            .map_ok(|r| Order {
+            .map_ok(|r| Case {
                 id: Some(r.id.try_into().unwrap()),
                 public_id: r.public_id,
                 quantity: r.quantity.try_into().unwrap(),
@@ -1957,20 +1957,20 @@ AND
             })
             .await?;
 
-        Ok(order)
+        Ok(case)
     }
 
     pub async fn all_older_than(
         db: &mut PoolConnection<Sqlite>,
         created_time_ms: u64,
-    ) -> Result<Vec<Order>, sqlx::Error> {
+    ) -> Result<Vec<Case>, sqlx::Error> {
         let created_time_ms_i64: i64 = created_time_ms.try_into().unwrap();
 
-        let orders = sqlx::query!(
+        let cases = sqlx::query!(
             "
 select *
 from
- orders
+ cases
 WHERE
  created_time_ms < ?
 AND
@@ -1979,7 +1979,7 @@ AND
             created_time_ms_i64,
         )
         .fetch(&mut **db)
-        .map_ok(|r| Order {
+        .map_ok(|r| Case {
             id: Some(r.id.try_into().unwrap()),
             public_id: r.public_id,
             quantity: r.quantity.try_into().unwrap(),
@@ -2005,20 +2005,20 @@ AND
         .try_collect::<Vec<_>>()
         .await?;
 
-        Ok(orders)
+        Ok(cases)
     }
 
     pub async fn mark_as_paid(
         db: &mut PoolConnection<Sqlite>,
-        order_id: i32,
+        case_id: i32,
         time_now_ms: u64,
     ) -> Result<(), sqlx::Error> {
         let time_now_ms_i64: i64 = time_now_ms.try_into().unwrap();
 
         sqlx::query!(
-            "UPDATE orders SET paid = true, payment_time_ms = ? WHERE id = ?",
+            "UPDATE cases SET paid = true, payment_time_ms = ? WHERE id = ?",
             time_now_ms_i64,
-            order_id,
+            case_id,
         )
         .execute(&mut **db)
         .await?;
@@ -2028,12 +2028,12 @@ AND
 
     pub async fn mark_as_awarded(
         db: &mut PoolConnection<Sqlite>,
-        order_id: i32,
+        case_id: i32,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "
 UPDATE
- orders
+ cases
 SET
  awarded = true, case_details= ''
 WHERE
@@ -2043,7 +2043,7 @@ AND
 AND
  not (awarded OR canceled_by_seller OR canceled_by_buyer)
 ;",
-            order_id,
+            case_id,
         )
         .execute(&mut **db)
         .await?;
@@ -2053,12 +2053,12 @@ AND
 
     pub async fn mark_as_canceled_by_seller(
         db: &mut PoolConnection<Sqlite>,
-        order_id: i32,
+        case_id: i32,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "
 UPDATE
- orders
+ cases
 SET
  canceled_by_seller = true, case_details= ''
 WHERE
@@ -2066,7 +2066,7 @@ WHERE
 AND
  not (awarded OR canceled_by_seller OR canceled_by_buyer)
 ;",
-            order_id,
+            case_id,
         )
         .execute(&mut **db)
         .await?;
@@ -2076,12 +2076,12 @@ AND
 
     pub async fn mark_as_canceled_by_buyer(
         db: &mut PoolConnection<Sqlite>,
-        order_id: i32,
+        case_id: i32,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "
 UPDATE
- orders
+ cases
 SET
  canceled_by_buyer = true, case_details= ''
 WHERE
@@ -2089,7 +2089,7 @@ WHERE
 AND
  not (awarded OR canceled_by_seller OR canceled_by_buyer)
 ;",
-            order_id,
+            case_id,
         )
         .execute(&mut **db)
         .await?;
@@ -2097,10 +2097,10 @@ AND
         Ok(())
     }
 
-    pub async fn delete_expired_order(
+    pub async fn delete_expired_case(
         db: &mut PoolConnection<Sqlite>,
-        order_id: i32,
-        cancel_order_invoice_future: impl Future<
+        case_id: i32,
+        cancel_case_invoice_future: impl Future<
             Output = Result<tonic_openssl_lnd::invoicesrpc::CancelInvoiceResp, String>,
         >,
     ) -> Result<(), String> {
@@ -2111,21 +2111,21 @@ AND
 
         sqlx::query!(
             "
-DELETE FROM orders
+DELETE FROM cases
 WHERE
  id = ?
 AND
  NOT paid
 ;",
-            order_id,
+            case_id,
         )
         .execute(&mut *tx)
         .await
-        .map_err(|_| "failed to delete order from database.")?;
+        .map_err(|_| "failed to delete case from database.")?;
 
-        cancel_order_invoice_future
+        cancel_case_invoice_future
             .await
-            .map_err(|e| format!("failed to cancel order invoice: {:?}", e))?;
+            .map_err(|e| format!("failed to cancel case invoice: {:?}", e))?;
 
         tx.commit()
             .await
@@ -2141,15 +2141,15 @@ AND
         let total_amount_sold_sat = sqlx::query(
             "
             select
-             SUM(orders.amount_owed_sat) as total_amount_sold_sat
+             SUM(cases.amount_owed_sat) as total_amount_sold_sat
             FROM
-             orders
+             cases
             WHERE
-             orders.awarded
+             cases.awarded
             AND
-             orders.seller_user_id = ?
+             cases.seller_user_id = ?
             GROUP BY
-             orders.seller_user_id
+             cases.seller_user_id
             ;",
         )
         .bind(user_id)
@@ -2166,15 +2166,15 @@ AND
         let weighted_average_rating = sqlx::query(
             "
             select
-             SUM(orders.amount_owed_sat * orders.review_rating * 1000) / SUM(orders.amount_owed_sat) as weighted_average
+             SUM(cases.amount_owed_sat * cases.review_rating * 1000) / SUM(cases.amount_owed_sat) as weighted_average
             FROM
-             orders
+             cases
             WHERE
-             orders.reviewed
+             cases.reviewed
             AND
-             orders.seller_user_id = ?
+             cases.seller_user_id = ?
             GROUP BY
-             orders.seller_user_id
+             cases.seller_user_id
             ;")
 .bind(user_id)
             .fetch_optional(&mut **db)
@@ -2209,26 +2209,26 @@ AND
          users
         LEFT JOIN
             (select
-             SUM(orders.amount_owed_sat) as total_amount_sold_sat, orders.seller_user_id as awarded_seller_user_id
+             SUM(cases.amount_owed_sat) as total_amount_sold_sat, cases.seller_user_id as awarded_seller_user_id
             FROM
-             orders
+             cases
             WHERE
              awarded 
             GROUP BY
-             orders.seller_user_id) as seller_infos
+             cases.seller_user_id) as seller_infos
         ON
          users.id = seller_infos.awarded_seller_user_id
         LEFT JOIN
             (select
-             SUM(orders.amount_owed_sat * orders.review_rating * 1000) / SUM(orders.amount_owed_sat) as weighted_average, orders.seller_user_id as reviewed_seller_user_id
+             SUM(cases.amount_owed_sat * cases.review_rating * 1000) / SUM(cases.amount_owed_sat) as weighted_average, cases.seller_user_id as reviewed_seller_user_id
             FROM
-             orders
+             cases
             WHERE
-             orders.reviewed
+             cases.reviewed
             AND
-             orders.awarded
+             cases.awarded
             GROUP BY
-             orders.seller_user_id) as seller_infos
+             cases.seller_user_id) as seller_infos
         ON
          users.id = seller_infos.reviewed_seller_user_id
         WHERE
@@ -2262,22 +2262,22 @@ AND
     }
 
     // TODO: implement this.
-    pub async fn most_recent_paid_order(
+    pub async fn most_recent_paid_case(
         db: &mut PoolConnection<Sqlite>,
     ) -> Result<Option<String>, sqlx::Error> {
-        let latest_paid_order_invoice_hash = sqlx::query!(
+        let latest_paid_case_invoice_hash = sqlx::query!(
             "
 SELECT
  invoice_hash
 FROM
 (SELECT invoice_hash, payment_time_ms FROM useraccounts
  UNION ALL
-SELECT invoice_hash, payment_time_ms FROM orders)
+SELECT invoice_hash, payment_time_ms FROM cases)
 WHERE
  payment_time_ms = (SELECT MAX(payment_time_ms) FROM
 (SELECT invoice_hash, payment_time_ms FROM useraccounts
  UNION ALL
-SELECT invoice_hash, payment_time_ms FROM orders))
+SELECT invoice_hash, payment_time_ms FROM cases))
 LIMIT 1
 ;"
         )
@@ -2285,55 +2285,55 @@ LIMIT 1
         .map_ok(|maybe_r| maybe_r.map(|r| r.invoice_hash))
         .await?;
 
-        Ok(latest_paid_order_invoice_hash)
+        Ok(latest_paid_case_invoice_hash)
     }
 
     pub async fn num_processing_for_user(
         db: &mut Connection<Db>,
         user_id: i32,
     ) -> Result<u32, sqlx::Error> {
-        let num_orders = sqlx::query!(
+        let num_cases = sqlx::query!(
             "
 select
- COUNT(orders.id) as num_processing_orders
+ COUNT(cases.id) as num_processing_cases
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- not (orders.awarded OR orders.canceled_by_seller OR orders.canceled_by_buyer)
+ not (cases.awarded OR cases.canceled_by_seller OR cases.canceled_by_buyer)
 AND
- orders.seller_user_id = ?
+ cases.seller_user_id = ?
 ;",
             user_id,
         )
         .fetch_one(&mut **db)
-        .map_ok(|r| r.num_processing_orders as u32)
+        .map_ok(|r| r.num_processing_cases as u32)
         .await?;
 
-        Ok(num_orders)
+        Ok(num_cases)
     }
 }
 
-impl OrderCard {
+impl CaseCard {
     pub async fn all_unpaid_for_user(
         db: &mut Connection<Db>,
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<OrderCard>, sqlx::Error> {
+    ) -> Result<Vec<CaseCard>, sqlx::Error> {
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let orders = sqlx::query!(
+        let cases = sqlx::query!(
             "
 select
- orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- orders
+ cases
 LEFT JOIN
  bounties
 ON
- orders.bounty_id = bounties.id
+ cases.bounty_id = bounties.id
 LEFT JOIN
  bountyimages
 ON
@@ -2345,12 +2345,12 @@ LEFT JOIN
 ON
  bounties.user_id = users.id
 WHERE
- not orders.paid
+ not cases.paid
 AND
- order_buyer_user_id = ?
+ case_buyer_user_id = ?
 GROUP BY
- orders.id
-ORDER BY orders.created_time_ms DESC
+ cases.id
+ORDER BY cases.created_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;",
@@ -2360,13 +2360,13 @@ OFFSET ?
         )
             .fetch(&mut **db)
             .map_ok(|r| {
-                let o = Order {
-                    id: Some(r.order_id.unwrap().try_into().unwrap()),
-                    public_id: r.order_public_id.unwrap(),
-                    quantity: r.order_quantity.unwrap().try_into().unwrap(),
-                    buyer_user_id: r.order_buyer_user_id.unwrap().try_into().unwrap(),
-                    seller_user_id: r.order_seller_user_id.unwrap().try_into().unwrap(),
-                    bounty_id: r.order_bounty_id.unwrap().try_into().unwrap(),
+                let o = Case {
+                    id: Some(r.case_id.unwrap().try_into().unwrap()),
+                    public_id: r.case_public_id.unwrap(),
+                    quantity: r.case_quantity.unwrap().try_into().unwrap(),
+                    buyer_user_id: r.case_buyer_user_id.unwrap().try_into().unwrap(),
+                    seller_user_id: r.case_seller_user_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.case_bounty_id.unwrap().try_into().unwrap(),
                     case_details: r.case_details.unwrap(),
                     amount_owed_sat: r.amount_owed_sat.unwrap().try_into().unwrap(),
                     seller_credit_sat: r.seller_credit_sat.unwrap().try_into().unwrap(),
@@ -2374,7 +2374,7 @@ OFFSET ?
                     awarded: r.awarded.unwrap(),
                     canceled_by_seller: r.canceled_by_seller.unwrap(),
                     canceled_by_buyer: r.canceled_by_buyer.unwrap(),
-                    reviewed: r.order_reviewed.unwrap(),
+                    reviewed: r.case_reviewed.unwrap(),
                     invoice_hash: r.invoice_hash.unwrap(),
                     invoice_payment_request: r.invoice_payment_request.unwrap(),
                     review_rating: r.review_rating.unwrap().try_into().unwrap(),
@@ -2409,8 +2409,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                OrderCard {
-                    order: o,
+                CaseCard {
+                    case: o,
                     bounty: l,
                     image: i,
                     user: u,
@@ -2419,7 +2419,7 @@ OFFSET ?
             .try_collect::<Vec<_>>()
             .await?;
 
-        Ok(orders)
+        Ok(cases)
     }
 
     pub async fn all_paid_for_user(
@@ -2427,19 +2427,19 @@ OFFSET ?
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<OrderCard>, sqlx::Error> {
+    ) -> Result<Vec<CaseCard>, sqlx::Error> {
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let orders = sqlx::query!(
+        let cases = sqlx::query!(
             "
 select
- orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- orders
+ cases
 LEFT JOIN
  bounties
 ON
- orders.bounty_id = bounties.id
+ cases.bounty_id = bounties.id
 LEFT JOIN
  bountyimages
 ON
@@ -2451,12 +2451,12 @@ LEFT JOIN
 ON
  bounties.user_id = users.id
 WHERE
- orders.paid
+ cases.paid
 AND
- order_buyer_user_id = ?
+ case_buyer_user_id = ?
 GROUP BY
- orders.id
-ORDER BY orders.payment_time_ms DESC
+ cases.id
+ORDER BY cases.payment_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;",
@@ -2466,13 +2466,13 @@ OFFSET ?
         )
             .fetch(&mut **db)
             .map_ok(|r| {
-                let o = Order {
-                    id: Some(r.order_id.unwrap().try_into().unwrap()),
-                    public_id: r.order_public_id.unwrap(),
-                    quantity: r.order_quantity.unwrap().try_into().unwrap(),
-                    buyer_user_id: r.order_buyer_user_id.unwrap().try_into().unwrap(),
-                    seller_user_id: r.order_seller_user_id.unwrap().try_into().unwrap(),
-                    bounty_id: r.order_bounty_id.unwrap().try_into().unwrap(),
+                let o = Case {
+                    id: Some(r.case_id.unwrap().try_into().unwrap()),
+                    public_id: r.case_public_id.unwrap(),
+                    quantity: r.case_quantity.unwrap().try_into().unwrap(),
+                    buyer_user_id: r.case_buyer_user_id.unwrap().try_into().unwrap(),
+                    seller_user_id: r.case_seller_user_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.case_bounty_id.unwrap().try_into().unwrap(),
                     case_details: r.case_details.unwrap(),
                     amount_owed_sat: r.amount_owed_sat.unwrap().try_into().unwrap(),
                     seller_credit_sat: r.seller_credit_sat.unwrap().try_into().unwrap(),
@@ -2480,7 +2480,7 @@ OFFSET ?
                     awarded: r.awarded.unwrap(),
                     canceled_by_seller: r.canceled_by_seller.unwrap(),
                     canceled_by_buyer: r.canceled_by_buyer.unwrap(),
-                    reviewed: r.order_reviewed.unwrap(),
+                    reviewed: r.case_reviewed.unwrap(),
                     invoice_hash: r.invoice_hash.unwrap(),
                     invoice_payment_request: r.invoice_payment_request.unwrap(),
                     review_rating: r.review_rating.unwrap().try_into().unwrap(),
@@ -2515,8 +2515,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                OrderCard {
-                    order: o,
+                CaseCard {
+                    case: o,
                     bounty: l,
                     image: i,
                     user: u,
@@ -2525,7 +2525,7 @@ OFFSET ?
             .try_collect::<Vec<_>>()
             .await?;
 
-        Ok(orders)
+        Ok(cases)
     }
 
     pub async fn all_received_for_user(
@@ -2533,19 +2533,19 @@ OFFSET ?
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<OrderCard>, sqlx::Error> {
+    ) -> Result<Vec<CaseCard>, sqlx::Error> {
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let orders = sqlx::query!(
+        let cases = sqlx::query!(
             "
 select
- orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- orders
+ cases
 LEFT JOIN
  bounties
 ON
- orders.bounty_id = bounties.id
+ cases.bounty_id = bounties.id
 LEFT JOIN
  bountyimages
 ON
@@ -2557,12 +2557,12 @@ LEFT JOIN
 ON
  bounties.user_id = users.id
 WHERE
- orders.awarded
+ cases.awarded
 AND
- order_seller_user_id = ?
+ case_seller_user_id = ?
 GROUP BY
- orders.id
-ORDER BY orders.payment_time_ms DESC
+ cases.id
+ORDER BY cases.payment_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;",
@@ -2572,13 +2572,13 @@ OFFSET ?
         )
             .fetch(&mut **db)
             .map_ok(|r| {
-                let o = Order {
-                    id: Some(r.order_id.unwrap().try_into().unwrap()),
-                    public_id: r.order_public_id.unwrap(),
-                    quantity: r.order_quantity.unwrap().try_into().unwrap(),
-                    buyer_user_id: r.order_buyer_user_id.unwrap().try_into().unwrap(),
-                    seller_user_id: r.order_seller_user_id.unwrap().try_into().unwrap(),
-                    bounty_id: r.order_bounty_id.unwrap().try_into().unwrap(),
+                let o = Case {
+                    id: Some(r.case_id.unwrap().try_into().unwrap()),
+                    public_id: r.case_public_id.unwrap(),
+                    quantity: r.case_quantity.unwrap().try_into().unwrap(),
+                    buyer_user_id: r.case_buyer_user_id.unwrap().try_into().unwrap(),
+                    seller_user_id: r.case_seller_user_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.case_bounty_id.unwrap().try_into().unwrap(),
                     case_details: r.case_details.unwrap(),
                     amount_owed_sat: r.amount_owed_sat.unwrap().try_into().unwrap(),
                     seller_credit_sat: r.seller_credit_sat.unwrap().try_into().unwrap(),
@@ -2586,7 +2586,7 @@ OFFSET ?
                     awarded: r.awarded.unwrap(),
                     canceled_by_seller: r.canceled_by_seller.unwrap(),
                     canceled_by_buyer: r.canceled_by_buyer.unwrap(),
-                    reviewed: r.order_reviewed.unwrap(),
+                    reviewed: r.case_reviewed.unwrap(),
                     invoice_hash: r.invoice_hash.unwrap(),
                     invoice_payment_request: r.invoice_payment_request.unwrap(),
                     review_rating: r.review_rating.unwrap().try_into().unwrap(),
@@ -2621,8 +2621,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                OrderCard {
-                    order: o,
+                CaseCard {
+                    case: o,
                     bounty: l,
                     image: i,
                     user: u,
@@ -2631,7 +2631,7 @@ OFFSET ?
             .try_collect::<Vec<_>>()
             .await?;
 
-        Ok(orders)
+        Ok(cases)
     }
 
     pub async fn all_processing_for_user(
@@ -2639,19 +2639,19 @@ OFFSET ?
         user_id: i32,
         page_size: u32,
         page_num: u32,
-    ) -> Result<Vec<OrderCard>, sqlx::Error> {
+    ) -> Result<Vec<CaseCard>, sqlx::Error> {
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
-        let orders = sqlx::query!(
+        let cases = sqlx::query!(
             "
 select
- orders.id as order_id, orders.public_id as order_public_id, orders.buyer_user_id as order_buyer_user_id, orders.seller_user_id as order_seller_user_id, orders.quantity as order_quantity, orders.bounty_id as order_bounty_id, orders.case_details, orders.amount_owed_sat, orders.seller_credit_sat, orders.paid, orders.awarded, orders.canceled_by_seller, orders.canceled_by_buyer, orders.reviewed as order_reviewed, orders.invoice_hash, orders.invoice_payment_request, orders.review_rating, orders.review_text, orders.created_time_ms, orders.payment_time_ms, orders.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
- orders
+ cases
 LEFT JOIN
  bounties
 ON
- orders.bounty_id = bounties.id
+ cases.bounty_id = bounties.id
 LEFT JOIN
  bountyimages
 ON
@@ -2663,14 +2663,14 @@ LEFT JOIN
 ON
  bounties.user_id = users.id
 WHERE
- orders.paid
+ cases.paid
 AND
- not (orders.awarded OR orders.canceled_by_seller OR orders.canceled_by_buyer)
+ not (cases.awarded OR cases.canceled_by_seller OR cases.canceled_by_buyer)
 AND
- orders.seller_user_id = ?
+ cases.seller_user_id = ?
 GROUP BY
- orders.id
-ORDER BY orders.payment_time_ms DESC
+ cases.id
+ORDER BY cases.payment_time_ms DESC
 LIMIT ?
 OFFSET ?
 ;",
@@ -2681,13 +2681,13 @@ OFFSET ?
             .fetch(&mut **db)
             .map_ok(|r| {
 
-                let o = Order {
-                    id: Some(r.order_id.unwrap().try_into().unwrap()),
-                    public_id: r.order_public_id.unwrap(),
-                    quantity: r.order_quantity.unwrap().try_into().unwrap(),
-                    buyer_user_id: r.order_buyer_user_id.unwrap().try_into().unwrap(),
-                    seller_user_id: r.order_seller_user_id.unwrap().try_into().unwrap(),
-                    bounty_id: r.order_bounty_id.unwrap().try_into().unwrap(),
+                let o = Case {
+                    id: Some(r.case_id.unwrap().try_into().unwrap()),
+                    public_id: r.case_public_id.unwrap(),
+                    quantity: r.case_quantity.unwrap().try_into().unwrap(),
+                    buyer_user_id: r.case_buyer_user_id.unwrap().try_into().unwrap(),
+                    seller_user_id: r.case_seller_user_id.unwrap().try_into().unwrap(),
+                    bounty_id: r.case_bounty_id.unwrap().try_into().unwrap(),
                     case_details: r.case_details.unwrap(),
                     amount_owed_sat: r.amount_owed_sat.unwrap().try_into().unwrap(),
                     seller_credit_sat: r.seller_credit_sat.unwrap().try_into().unwrap(),
@@ -2695,7 +2695,7 @@ OFFSET ?
                     awarded: r.awarded.unwrap(),
                     canceled_by_seller: r.canceled_by_seller.unwrap(),
                     canceled_by_buyer: r.canceled_by_buyer.unwrap(),
-                    reviewed: r.order_reviewed.unwrap(),
+                    reviewed: r.case_reviewed.unwrap(),
                     invoice_hash: r.invoice_hash.unwrap(),
                     invoice_payment_request: r.invoice_payment_request.unwrap(),
                     review_rating: r.review_rating.unwrap().try_into().unwrap(),
@@ -2730,8 +2730,8 @@ OFFSET ?
                     id: Some(rocket_auth_user_id.try_into().unwrap()),
                     username: r.rocket_auth_user_username.unwrap(),
                 });
-                OrderCard {
-                    order: o,
+                CaseCard {
+                    case: o,
                     bounty: l,
                     image: i,
                     user: u,
@@ -2741,7 +2741,7 @@ OFFSET ?
             .try_collect::<Vec<_>>()
             .await?;
 
-        Ok(orders)
+        Ok(cases)
     }
 }
 
@@ -2751,10 +2751,10 @@ impl AccountInfo {
         user_id: i32,
     ) -> Result<AccountInfo, sqlx::Error> {
         let account_balance_sat = AccountInfo::total_account_balance_for_user(db, user_id).await?;
-        let num_unawarded_orders = Order::num_processing_for_user(db, user_id).await?;
+        let num_unawarded_cases = Case::num_processing_for_user(db, user_id).await?;
         Ok(AccountInfo {
             account_balance_sat,
-            num_unawarded_orders,
+            num_unawarded_cases,
         })
     }
 
@@ -2764,30 +2764,30 @@ impl AccountInfo {
         page_size: u32,
         page_num: u32,
     ) -> Result<Vec<AccountBalanceChange>, sqlx::Error> {
-        // TODO: Order by event time in SQL query. When this is fixed: https://github.com/launchbadge/sqlx/issues/1350
+        // TODO: Case by event time in SQL query. When this is fixed: https://github.com/launchbadge/sqlx/issues/1350
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
         let account_balance_changes = sqlx::query("
 SELECT * FROM
-(select orders.seller_user_id as user_id, orders.seller_credit_sat as amount_change_sat, 'received_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+(select cases.seller_user_id as user_id, cases.seller_credit_sat as amount_change_sat, 'received_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- orders.awarded
+ cases.awarded
 AND
- orders.seller_user_id = ?
+ cases.seller_user_id = ?
 UNION ALL
-select orders.buyer_user_id as user_id, orders.amount_owed_sat as amount_change_sat, 'refunded_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+select cases.buyer_user_id as user_id, cases.amount_owed_sat as amount_change_sat, 'refunded_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- (orders.canceled_by_seller OR orders.canceled_by_buyer)
+ (cases.canceled_by_seller OR cases.canceled_by_buyer)
 AND
- orders.buyer_user_id = ?
+ cases.buyer_user_id = ?
 UNION ALL
 select withdrawals.user_id as user_id, (0 - withdrawals.amount_sat) as amount_change_sat, 'withdrawal' as event_type, withdrawals.public_id as event_id, withdrawals.created_time_ms as event_time_ms
 from
@@ -2825,25 +2825,25 @@ OFFSET ?
     ) -> Result<i64, sqlx::Error> {
         let account_balance_sat = sqlx::query("
 SELECT SUM(amount_change_sat) as total_account_balance_sat FROM
-(select orders.seller_user_id as user_id, orders.seller_credit_sat as amount_change_sat, 'received_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+(select cases.seller_user_id as user_id, cases.seller_credit_sat as amount_change_sat, 'received_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- orders.awarded
+ cases.awarded
 AND
- orders.seller_user_id = ?
+ cases.seller_user_id = ?
 UNION ALL
-select orders.buyer_user_id as user_id, orders.amount_owed_sat as amount_change_sat, 'refunded_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+select cases.buyer_user_id as user_id, cases.amount_owed_sat as amount_change_sat, 'refunded_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- (orders.canceled_by_seller OR orders.canceled_by_buyer)
+ (cases.canceled_by_seller OR cases.canceled_by_buyer)
 AND
- orders.buyer_user_id = ?
+ cases.buyer_user_id = ?
 UNION ALL
 select withdrawals.user_id as user_id, (0 - withdrawals.amount_sat) as amount_change_sat, 'withdrawal' as event_type, withdrawals.public_id as event_id, withdrawals.created_time_ms as event_time_ms
 from
@@ -2869,34 +2869,34 @@ WHERE
         page_size: u32,
         page_num: u32,
     ) -> Result<Vec<AccountBalanceChange>, sqlx::Error> {
-        // TODO: Order by event time in SQL query. When this is fixed: https://github.com/launchbadge/sqlx/issues/1350
+        // TODO: Case by event time in SQL query. When this is fixed: https://github.com/launchbadge/sqlx/issues/1350
         let offset = (page_num - 1) * page_size;
         let limit = page_size;
         let account_balance_changes = sqlx::query("
 SELECT * FROM
-(select orders.seller_user_id as user_id, orders.seller_credit_sat as amount_change_sat, 'received_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+(select cases.seller_user_id as user_id, cases.seller_credit_sat as amount_change_sat, 'received_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- orders.awarded
+ cases.awarded
 UNION ALL
-select orders.buyer_user_id as user_id, orders.amount_owed_sat as amount_change_sat, 'refunded_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+select cases.buyer_user_id as user_id, cases.amount_owed_sat as amount_change_sat, 'refunded_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- (orders.canceled_by_seller OR orders.canceled_by_buyer)
+ (cases.canceled_by_seller OR cases.canceled_by_buyer)
 UNION ALL
-select orders.buyer_user_id as user_id, orders.amount_owed_sat as amount_change_sat, 'processing_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+select cases.buyer_user_id as user_id, cases.amount_owed_sat as amount_change_sat, 'processing_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- NOT (orders.awarded OR orders.canceled_by_seller OR orders.canceled_by_buyer)
+ NOT (cases.awarded OR cases.canceled_by_seller OR cases.canceled_by_buyer)
 UNION ALL
 select withdrawals.user_id as user_id, (0 - withdrawals.amount_sat) as amount_change_sat, 'withdrawal' as event_type, withdrawals.public_id as event_id, withdrawals.created_time_ms as event_time_ms
 from
@@ -2932,29 +2932,29 @@ OFFSET ?
     pub async fn total_market_liabilities_sat(db: &mut Connection<Db>) -> Result<i64, sqlx::Error> {
         let market_liabilities_sat = sqlx::query("
 SELECT SUM(amount_change_sat) as total_market_liabilities_sat FROM
-(select orders.seller_user_id as user_id, orders.seller_credit_sat as amount_change_sat, 'received_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+(select cases.seller_user_id as user_id, cases.seller_credit_sat as amount_change_sat, 'received_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- orders.awarded
+ cases.awarded
 UNION ALL
-select orders.buyer_user_id as user_id, orders.amount_owed_sat as amount_change_sat, 'refunded_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+select cases.buyer_user_id as user_id, cases.amount_owed_sat as amount_change_sat, 'refunded_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- (orders.canceled_by_seller OR orders.canceled_by_buyer)
+ (cases.canceled_by_seller OR cases.canceled_by_buyer)
 UNION ALL
-select orders.buyer_user_id as user_id, orders.amount_owed_sat as amount_change_sat, 'processing_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+select cases.buyer_user_id as user_id, cases.amount_owed_sat as amount_change_sat, 'processing_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- NOT (orders.awarded OR orders.canceled_by_seller OR orders.canceled_by_buyer)
+ NOT (cases.awarded OR cases.canceled_by_seller OR cases.canceled_by_buyer)
 UNION ALL
 select withdrawals.user_id as user_id, (0 - withdrawals.amount_sat) as amount_change_sat, 'withdrawal' as event_type, withdrawals.public_id as event_id, withdrawals.created_time_ms as event_time_ms
 from
@@ -2984,29 +2984,29 @@ WHERE
     //         let account_balance_result = sqlx::query!("
     // SELECT SUM(data.amount_change_sat) as account_balance, data.user_id as user_id
     // FROM
-    // (select bounties.user_id as user_id, orders.seller_credit_sat as amount_change_sat, 'received_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+    // (select bounties.user_id as user_id, cases.seller_credit_sat as amount_change_sat, 'received_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
     // from
-    //  orders
+    //  cases
     // LEFT JOIN
     //  bounties
     // ON
-    //  orders.bounty_id = bounties.id
+    //  cases.bounty_id = bounties.id
     // WHERE
-    //  orders.paid
+    //  cases.paid
     // AND
-    //  orders.awarded
+    //  cases.awarded
     // AND
     //  bounties.user_id = ?
     // UNION ALL
-    // select orders.user_id as user_id, orders.amount_owed_sat as amount_change_sat, 'refunded_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+    // select cases.user_id as user_id, cases.amount_owed_sat as amount_change_sat, 'refunded_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
     // from
-    //  orders
+    //  cases
     // WHERE
-    //  orders.paid
+    //  cases.paid
     // AND
-    //  not orders.awarded
+    //  not cases.awarded
     // AND
-    //  orders.user_id = ?
+    //  cases.user_id = ?
     // ) data
     // GROUP BY user_id
     // ;",
@@ -3084,25 +3084,25 @@ ORDER BY withdrawals.created_time_ms ASC;",
 
         let account_balance_sat = sqlx::query("
 SELECT SUM(amount_change_sat) as total_account_balance_sat FROM
-(select orders.seller_user_id as user_id, orders.seller_credit_sat as amount_change_sat, 'received_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+(select cases.seller_user_id as user_id, cases.seller_credit_sat as amount_change_sat, 'received_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- orders.awarded
+ cases.awarded
 AND
- orders.seller_user_id = ?
+ cases.seller_user_id = ?
 UNION ALL
-select orders.buyer_user_id as user_id, orders.amount_owed_sat as amount_change_sat, 'refunded_order' as event_type, orders.public_id as event_id, orders.created_time_ms as event_time_ms
+select cases.buyer_user_id as user_id, cases.amount_owed_sat as amount_change_sat, 'refunded_case' as event_type, cases.public_id as event_id, cases.created_time_ms as event_time_ms
 from
- orders
+ cases
 WHERE
- orders.paid
+ cases.paid
 AND
- (orders.canceled_by_seller OR orders.canceled_by_buyer)
+ (cases.canceled_by_seller OR cases.canceled_by_buyer)
 AND
- orders.buyer_user_id = ?
+ cases.buyer_user_id = ?
 UNION ALL
 select withdrawals.user_id as user_id, (0 - withdrawals.amount_sat) as amount_change_sat, 'withdrawal' as event_type, withdrawals.public_id as event_id, withdrawals.created_time_ms as event_time_ms
 from

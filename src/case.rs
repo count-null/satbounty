@@ -2,7 +2,7 @@ use crate::base::BaseContext;
 use crate::config::Config;
 use crate::db::Db;
 use crate::lightning;
-use crate::models::{Bounty, Order, ReviewInput, RocketAuthUser};
+use crate::models::{Bounty, Case, ReviewInput, RocketAuthUser};
 use crate::user_account::ActiveUser;
 use crate::util;
 use rocket::fairing::AdHoc;
@@ -22,7 +22,7 @@ use rocket_dyn_templates::Template;
 struct Context {
     base_context: BaseContext,
     flash: Option<(String, String)>,
-    order: Order,
+    case: Case,
     maybe_bounty: Option<Bounty>,
     maybe_seller_user: Option<RocketAuthUser>,
     user: Option<User>,
@@ -34,7 +34,7 @@ struct Context {
 impl Context {
     pub async fn raw(
         mut db: Connection<Db>,
-        order_id: &str,
+        case_id: &str,
         flash: Option<(String, String)>,
         user: Option<User>,
         admin_user: Option<AdminUser>,
@@ -43,19 +43,19 @@ impl Context {
         let base_context = BaseContext::raw(&mut db, user.clone(), admin_user.clone())
             .await
             .map_err(|_| "failed to get base template.")?;
-        let order = Order::single_by_public_id(&mut db, order_id)
+        let case = Case::single_by_public_id(&mut db, case_id)
             .await
-            .map_err(|_| "failed to get order.")?;
-        let maybe_bounty = Bounty::single(&mut db, order.bounty_id).await.ok();
+            .map_err(|_| "failed to get case.")?;
+        let maybe_bounty = Bounty::single(&mut db, case.bounty_id).await.ok();
         // .map_err(|_| "failed to get bounty.")?;
         // {
         //     Ok(bounty) => Some(bounty),
         //     Err(_) => None
         // };
-        let maybe_seller_user = RocketAuthUser::single(&mut db, order.seller_user_id)
+        let maybe_seller_user = RocketAuthUser::single(&mut db, case.seller_user_id)
             .await
             .ok();
-        let qr_svg_bytes = util::generate_qr(&order.invoice_payment_request);
+        let qr_svg_bytes = util::generate_qr(&case.invoice_payment_request);
         let qr_svg_base64 = util::to_base64(&qr_svg_bytes);
         let lightning_node_pubkey = get_lightning_node_pubkey(config)
             .await
@@ -63,7 +63,7 @@ impl Context {
         Ok(Context {
             base_context,
             flash,
-            order,
+            case,
             maybe_bounty,
             maybe_seller_user,
             user,
@@ -101,13 +101,13 @@ async fn award(
 ) -> Result<Flash<Redirect>, Flash<Redirect>> {
     match mark_case_as_awarded(id, &mut db, active_user.user.clone(), admin_user.clone()).await {
         Ok(_) => Ok(Flash::success(
-            Redirect::to(format!("/{}/{}", "order", id)),
+            Redirect::to(format!("/{}/{}", "case", id)),
             "Case has been awarded.",
         )),
         Err(e) => {
             error_!("DB update({}) error: {}", id, e);
             Err(Flash::error(
-                Redirect::to(format!("/{}/{}", "order", id)),
+                Redirect::to(format!("/{}/{}", "case", id)),
                 "Failed to mark case as awarded.",
             ))
         }
@@ -115,26 +115,26 @@ async fn award(
 }
 
 async fn mark_case_as_awarded(
-    order_id: &str,
+    case_id: &str,
     db: &mut Connection<Db>,
     user: User,
     _admin_user: Option<AdminUser>,
 ) -> Result<(), String> {
-    let order = Order::single_by_public_id(db, order_id)
+    let case = Case::single_by_public_id(db, case_id)
         .await
-        .map_err(|_| "failed to get order.")?;
+        .map_err(|_| "failed to get case.")?;
 
-    if order.seller_user_id != user.id() {
-        return Err("User is not the order seller.".to_string());
+    if case.seller_user_id != user.id() {
+        return Err("User is not the case seller.".to_string());
     };
-    if order.awarded {
+    if case.awarded {
         return Err("case has already been rewarded.".to_string());
     };
-    if order.canceled_by_seller || order.canceled_by_buyer {
+    if case.canceled_by_seller || case.canceled_by_buyer {
         return Err("case is already widthdrawn.".to_string());
     }
 
-    Order::mark_as_awarded(&mut *db, order.id.unwrap())
+    Case::mark_as_awarded(&mut *db, case.id.unwrap())
         .await
         .map_err(|_| "failed to mark case as awarded.".to_string())
 }
@@ -146,7 +146,7 @@ async fn seller_cancel(
     active_user: ActiveUser,
     admin_user: Option<AdminUser>,
 ) -> Result<Flash<Redirect>, Flash<Redirect>> {
-    match mark_order_as_canceled_by_seller(
+    match mark_case_as_canceled_by_seller(
         id,
         &mut db,
         active_user.user.clone(),
@@ -155,42 +155,42 @@ async fn seller_cancel(
     .await
     {
         Ok(_) => Ok(Flash::success(
-            Redirect::to(format!("/{}/{}", "order", id)),
-            "Order marked as canceled by seller.",
+            Redirect::to(format!("/{}/{}", "case", id)),
+            "Case marked as canceled by seller.",
         )),
         Err(e) => {
             error_!("DB update({}) error: {}", id, e);
             Err(Flash::error(
-                Redirect::to(format!("/{}/{}", "order", id)),
-                "Failed to mark order as canceled by seller.",
+                Redirect::to(format!("/{}/{}", "case", id)),
+                "Failed to mark case as canceled by seller.",
             ))
         }
     }
 }
 
-async fn mark_order_as_canceled_by_seller(
-    order_id: &str,
+async fn mark_case_as_canceled_by_seller(
+    case_id: &str,
     db: &mut Connection<Db>,
     user: User,
     _admin_user: Option<AdminUser>,
 ) -> Result<(), String> {
-    let order = Order::single_by_public_id(db, order_id)
+    let case = Case::single_by_public_id(db, case_id)
         .await
-        .map_err(|_| "failed to get order.")?;
+        .map_err(|_| "failed to get case.")?;
 
-    if order.seller_user_id != user.id() {
-        return Err("User is not the order seller.".to_string());
+    if case.seller_user_id != user.id() {
+        return Err("User is not the case seller.".to_string());
     };
-    if order.awarded {
+    if case.awarded {
         return Err("case has already been awarded.".to_string());
     };
-    if order.canceled_by_seller || order.canceled_by_buyer {
+    if case.canceled_by_seller || case.canceled_by_buyer {
         return Err("case has already been canceled.".to_string());
     }
 
-    Order::mark_as_canceled_by_seller(&mut *db, order.id.unwrap())
+    Case::mark_as_canceled_by_seller(&mut *db, case.id.unwrap())
         .await
-        .map_err(|_| "failed to mark order as canceled by seller.".to_string())
+        .map_err(|_| "failed to mark case as canceled by seller.".to_string())
 }
 
 #[put("/<id>/buyer_cancel")]
@@ -200,89 +200,89 @@ async fn buyer_cancel(
     active_user: ActiveUser,
     admin_user: Option<AdminUser>,
 ) -> Result<Flash<Redirect>, Flash<Redirect>> {
-    match mark_order_as_canceled_by_buyer(id, &mut db, active_user.user.clone(), admin_user.clone())
+    match mark_case_as_canceled_by_buyer(id, &mut db, active_user.user.clone(), admin_user.clone())
         .await
     {
         Ok(_) => Ok(Flash::success(
-            Redirect::to(format!("/{}/{}", "order", id)),
-            "Order marked as canceled by buyer.",
+            Redirect::to(format!("/{}/{}", "case", id)),
+            "Case marked as canceled by buyer.",
         )),
         Err(e) => {
             error_!("DB update({}) error: {}", id, e);
             Err(Flash::error(
-                Redirect::to(format!("/{}/{}", "order", id)),
-                "Failed to mark order as canceled by buyer.",
+                Redirect::to(format!("/{}/{}", "case", id)),
+                "Failed to mark case as canceled by buyer.",
             ))
         }
     }
 }
 
-async fn mark_order_as_canceled_by_buyer(
-    order_id: &str,
+async fn mark_case_as_canceled_by_buyer(
+    case_id: &str,
     db: &mut Connection<Db>,
     user: User,
     _admin_user: Option<AdminUser>,
 ) -> Result<(), String> {
-    let order = Order::single_by_public_id(db, order_id)
+    let case = Case::single_by_public_id(db, case_id)
         .await
-        .map_err(|_| "failed to get order.")?;
+        .map_err(|_| "failed to get case.")?;
 
-    if order.buyer_user_id != user.id() {
-        return Err("User is not the order buyer.".to_string());
+    if case.buyer_user_id != user.id() {
+        return Err("User is not the case buyer.".to_string());
     };
-    if order.awarded{
+    if case.awarded{
         return Err("case has already been rewarded".to_string());
     };
-    if order.canceled_by_seller || order.canceled_by_buyer {
-        return Err("order is already canceled.".to_string());
+    if case.canceled_by_seller || case.canceled_by_buyer {
+        return Err("case is already canceled.".to_string());
     };
 
-    Order::mark_as_canceled_by_buyer(&mut *db, order.id.unwrap())
+    Case::mark_as_canceled_by_buyer(&mut *db, case.id.unwrap())
         .await
-        .map_err(|_| "failed to mark order as canceled by buyer.".to_string())
+        .map_err(|_| "failed to mark case as canceled by buyer.".to_string())
 }
 
-#[post("/<id>/new_review", data = "<order_review_form>")]
+#[post("/<id>/new_review", data = "<case_review_form>")]
 async fn new_review(
     id: &str,
-    order_review_form: Form<ReviewInput>,
+    case_review_form: Form<ReviewInput>,
     mut db: Connection<Db>,
     active_user: ActiveUser,
     _admin_user: Option<AdminUser>,
 ) -> Result<Flash<Redirect>, Flash<Redirect>> {
-    let order_review_info = order_review_form.into_inner();
-    match create_order_review(id, order_review_info, &mut db, active_user.user.clone()).await {
+    let case_review_info = case_review_form.into_inner();
+    match create_case_review(id, case_review_info, &mut db, active_user.user.clone()).await {
         Ok(_) => Ok(Flash::success(
-            Redirect::to(format!("/{}/{}", "order", id)),
+            Redirect::to(format!("/{}/{}", "case", id)),
             "Review Successfully Posted.",
         )),
         Err(e) => {
             error_!("DB insertion error: {}", e);
             Err(Flash::error(
-                Redirect::to(format!("/{}/{}", "order", id)),
+                Redirect::to(format!("/{}/{}", "case", id)),
                 e,
             ))
         }
     }
 }
 
-async fn create_order_review(
-    order_id: &str,
-    order_review_info: ReviewInput,
+async fn create_case_review(
+    case_id: &str,
+    case_review_info: ReviewInput,
     db: &mut Connection<Db>,
     user: User,
 ) -> Result<(), String> {
     let now = util::current_time_millis();
-    let order = Order::single_by_public_id(db, order_id)
+    let case = Case::single_by_public_id(db, case_id)
         .await
-        .map_err(|_| "failed to get order")?;
-    let review_rating = order_review_info.review_rating.unwrap_or(0);
-    let review_text = order_review_info.review_text;
+        .map_err(|_| "failed to get case")?;
+    let review_rating = case_review_info.review_rating.unwrap_or(0);
+    let review_text = case_review_info.review_text;
 
-    if !order.awarded {
-        return Err("Cannot post review for order that is not awarded.".to_string());
+    if !case.awarded {
+        return Err("Cannot post review for case that is not awarded.".to_string());
     };
-    if user.id() != order.buyer_user_id {
+    if user.id() != case.buyer_user_id {
         return Err("User is not the buyer.".to_string());
     };
     if !(1..=5).contains(&review_rating) {
@@ -292,15 +292,15 @@ async fn create_order_review(
         return Err("Review text is too long.".to_string());
     };
 
-    let new_review_time_ms = if order.review_time_ms > 0 {
-        order.review_time_ms
+    let new_review_time_ms = if case.review_time_ms > 0 {
+        case.review_time_ms
     } else {
         now
     };
 
-    Order::set_order_review(
+    Case::set_case_review(
         db,
-        order_id,
+        case_id,
         review_rating,
         &review_text,
         new_review_time_ms,
@@ -308,7 +308,7 @@ async fn create_order_review(
     .await
     .map_err(|e| {
         error_!("DB insertion error: {}", e);
-        "Order Review could not be inserted due an internal error.".to_string()
+        "Case Review could not be inserted due an internal error.".to_string()
     })
 }
 
@@ -325,13 +325,13 @@ async fn index(
     let context = Context::raw(db, id, flash, user, admin_user, config)
         .await
         .map_err(|_| "failed to get template context.")?;
-    Ok(Template::render("order", context))
+    Ok(Template::render("case", context))
 }
 
-pub fn order_stage() -> AdHoc {
-    AdHoc::on_ignite("Order Stage", |rocket| async {
+pub fn case_stage() -> AdHoc {
+    AdHoc::on_ignite("Case Stage", |rocket| async {
         rocket.mount(
-            "/order",
+            "/case",
             routes![index, award, seller_cancel, buyer_cancel, new_review],
         )
     })

@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::db::Db;
-use crate::order_expiry;
+use crate::case_expiry;
 use crate::payment_processor;
 use crate::user_account_expiry;
 use rocket::fairing::{self, AdHoc};
@@ -121,7 +121,7 @@ pub fn stage(config: Config) -> AdHoc {
                     });
                 })
             }))
-            .attach(AdHoc::on_liftoff("Remove expired orders", |rocket| {
+            .attach(AdHoc::on_liftoff("Remove expired cases", |rocket| {
                 Box::pin(async move {
                     let pool = match Db::fetch(rocket) {
                         Some(pool) => pool.0.clone(), // clone the wrapped pool
@@ -133,15 +133,15 @@ pub fn stage(config: Config) -> AdHoc {
                         );
                         loop {
                             if let Ok(conn) = pool.acquire().await {
-                                // Remove expired orders
-                                match order_expiry::remove_expired_orders(
+                                // Remove expired cases
+                                match case_expiry::remove_expired_cases(
                                     config_clone_3.clone(),
                                     conn,
                                 )
                                 .await
                                 {
                                     Ok(_) => (),
-                                    Err(e) => println!("order expiry task failed: {:?}", e),
+                                    Err(e) => println!("case expiry task failed: {:?}", e),
                                 }
                             }
                             interval.tick().await;
@@ -165,7 +165,7 @@ pub fn stage(config: Config) -> AdHoc {
                             );
                             loop {
                                 if let Ok(conn) = pool.acquire().await {
-                                    // Remove expired orders
+                                    // Remove expired cases
                                     match user_account_expiry::remove_expired_user_accounts(
                                         config_clone_4.clone(),
                                         conn,
@@ -216,12 +216,12 @@ pub fn stage(config: Config) -> AdHoc {
             .attach(crate::my_active_bounties::my_active_bounties_stage())
             .attach(crate::my_rejected_bounties::my_rejected_bounties_stage())
             .attach(crate::my_deactivated_bounties::my_deactivated_bounties_stage())
-            .attach(crate::my_unpaid_orders::my_unpaid_orders_stage())
-            .attach(crate::my_paid_orders::my_paid_orders_stage())
+            .attach(crate::my_unpaid_cases::my_unpaid_cases_stage())
+            .attach(crate::my_paid_cases::my_paid_cases_stage())
             .attach(crate::my_account_balance::my_account_balance_stage())
-            .attach(crate::my_processing_orders::my_processing_orders_stage())
-            .attach(crate::prepare_order::prepare_order_stage())
-            .attach(crate::order::order_stage())
+            .attach(crate::my_processing_cases::my_processing_cases_stage())
+            .attach(crate::prepare_case::prepare_case_stage())
+            .attach(crate::case::case_stage())
             .attach(crate::withdraw::withdraw_stage())
             .attach(crate::withdrawal::withdrawal_stage())
             .attach(crate::seller_history::seller_history_stage())

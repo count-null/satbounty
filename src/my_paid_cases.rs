@@ -1,6 +1,6 @@
 use crate::base::BaseContext;
 use crate::db::Db;
-use crate::models::OrderCard;
+use crate::models::CaseCard;
 use crate::user_account::ActiveUser;
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
@@ -16,7 +16,7 @@ const PAGE_SIZE: u32 = 10;
 struct Context {
     base_context: BaseContext,
     flash: Option<(String, String)>,
-    order_cards: Vec<OrderCard>,
+    case_cards: Vec<CaseCard>,
     page_num: u32,
 }
 
@@ -32,13 +32,13 @@ impl Context {
             .await
             .map_err(|_| "failed to get base template.")?;
         let page_num = maybe_page_num.unwrap_or(1);
-        let order_cards = OrderCard::all_unpaid_for_user(&mut db, user.id, PAGE_SIZE, page_num)
+        let case_cards = CaseCard::all_paid_for_user(&mut db, user.id, PAGE_SIZE, page_num)
             .await
-            .map_err(|_| "failed to get unpaid orders.")?;
+            .map_err(|_| "failed to get paid cases.")?;
         Ok(Context {
             base_context,
             flash,
-            order_cards,
+            case_cards,
             page_num,
         })
     }
@@ -56,12 +56,12 @@ async fn index(
     let context = Context::raw(flash, db, page_num, active_user.user, admin_user)
         .await
         .map_err(|_| "failed to get template context.")?;
-    Ok(Template::render("myunpaidorders", context))
+    Ok(Template::render("mypaidcases", context))
 }
 
-pub fn my_unpaid_orders_stage() -> AdHoc {
-    AdHoc::on_ignite("My Unpaid Orders Stage", |rocket| async {
-        rocket.mount("/my_unpaid_orders", routes![index])
+pub fn my_paid_cases_stage() -> AdHoc {
+    AdHoc::on_ignite("My Paid Cases Stage", |rocket| async {
+        rocket.mount("/my_paid_cases", routes![index])
         // .mount("/bounty", routes![new])
     })
 }

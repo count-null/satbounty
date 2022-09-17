@@ -8,10 +8,10 @@
 
     <div class="row">
 
-      <h3>My Unpaid Orders</h3>
+      <h3>My Paid Cases</h3>
 
       <div class="twelve columns">
-	{% include "ordercardpage" %}
+	{% include "casecardpage" %}
       </div>
     </div>
   </div>
