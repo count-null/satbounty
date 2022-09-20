@@ -119,8 +119,8 @@ async fn approve_bounty(db: &mut Connection<Db>, id: &str) -> Result<(), String>
     if !bounty.submitted {
         return Err("Bounty is not submitted.".to_string());
     };
-    if bounty.reviewed {
-        return Err("Bounty is already reviewed.".to_string());
+    if bounty.viewed {
+        return Err("Bounty is already viewed.".to_string());
     };
 
     Bounty::mark_as_approved(db, id)
@@ -155,8 +155,8 @@ async fn reject_bounty(db: &mut Connection<Db>, id: &str) -> Result<(), String> 
     if !bounty.submitted {
         return Err("bounty is not submitted.".to_string());
     };
-    if bounty.reviewed {
-        return Err("bounty is already reviewed.".to_string());
+    if bounty.viewed {
+        return Err("bounty is already viewed.".to_string());
     };
 
     Bounty::mark_as_rejected(db, id)

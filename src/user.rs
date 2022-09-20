@@ -1,6 +1,6 @@
 use crate::base::BaseContext;
 use crate::db::Db;
-use crate::models::{BountyCardDisplay, Case, RocketAuthUser, UserAccount};
+use crate::models::{BountyCardDisplay, RocketAuthUser, UserAccount};
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
 use rocket::response::Flash;
@@ -20,7 +20,6 @@ struct Context {
     flash: Option<(String, String)>,
     visited_user: RocketAuthUser,
     visited_user_account: UserAccount,
-    weighted_average_rating: f32,
     bounty_cards: Vec<BountyCardDisplay>,
     admin_user: Option<AdminUser>,
     page_num: u32,
@@ -53,16 +52,11 @@ impl Context {
         )
         .await
         .map_err(|_| "failed to get approved bounties.")?;
-        let seller_info = Case::seller_info_for_user(&mut db, visited_user.id.unwrap())
-            .await
-            .map_err(|_| "failed to get weighted average rating for user.")?;
-        let weighted_average_rating = seller_info.weighted_average_rating;
         Ok(Context {
             base_context,
             flash,
             visited_user,
             visited_user_account,
-            weighted_average_rating,
             bounty_cards,
             admin_user,
             page_num,

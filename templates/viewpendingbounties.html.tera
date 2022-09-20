@@ -8,7 +8,7 @@
 
     <div class="row">
 
-      <h3>Review Pending Bounties</h3>
+      <h3>Pending Bounties</h3>
 
       <div class="twelve columns">
 	{% include "bountytablepage" %}

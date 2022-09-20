@@ -23,7 +23,7 @@ pub struct Bounty {
     pub price_sat: u64,
     pub fee_rate_basis_points: u32,
     pub submitted: bool,
-    pub reviewed: bool,
+    pub viewed: bool,
     pub approved: bool,
     pub deactivated_by_seller: bool,
     pub deactivated_by_admin: bool,
@@ -152,14 +152,10 @@ pub struct Case {
     pub awarded: bool,
     pub canceled_by_seller: bool,
     pub canceled_by_buyer: bool,
-    pub reviewed: bool,
     pub invoice_hash: String,
     pub invoice_payment_request: String,
-    pub review_rating: u32,
-    pub review_text: String,
     pub created_time_ms: u64,
     pub payment_time_ms: u64,
-    pub review_time_ms: u64,
 }
 
 #[derive(Debug, FromForm, Clone)]
@@ -216,18 +212,11 @@ pub struct WithdrawalInfo {
     pub invoice_payment_request: String,
 }
 
-#[derive(Debug, FromForm, Clone)]
-pub struct ReviewInput {
-    pub review_rating: Option<u32>,
-    pub review_text: String,
-}
-
 #[derive(Serialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
 pub struct SellerInfo {
     pub username: String,
     pub total_amount_sold_sat: u64,
-    pub weighted_average_rating: f32,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -290,7 +279,7 @@ impl Bounty {
         let created_time_ms: i64 = bounty.created_time_ms.try_into().unwrap();
 
         let insert_result = sqlx::query!(
-            "INSERT INTO bounties (public_id, user_id, title, description, price_sat, fee_rate_basis_points, submitted, reviewed, approved, deactivated_by_seller, deactivated_by_admin, created_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO bounties (public_id, user_id, title, description, price_sat, fee_rate_basis_points, submitted, viewed, approved, deactivated_by_seller, deactivated_by_admin, created_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             bounty.public_id,
             bounty.user_id,
             bounty.title,
@@ -298,8 +287,8 @@ impl Bounty {
             price_sat,
             bounty.fee_rate_basis_points,
             bounty.submitted,
-            bounty.reviewed,
-            bounty.approved,
+            bounty.viewed,
+	        bounty.approved,
             bounty.deactivated_by_seller,
             bounty.deactivated_by_admin,
             created_time_ms,
@@ -352,8 +341,8 @@ AND
                 price_sat: r.price_sat.try_into().unwrap(),
                 fee_rate_basis_points: r.fee_rate_basis_points.try_into().unwrap(),
                 submitted: r.submitted,
-                reviewed: r.reviewed,
-                approved: r.approved,
+                viewed: r.viewed,
+		        approved: r.approved,
                 deactivated_by_seller: r.deactivated_by_seller,
                 deactivated_by_admin: r.deactivated_by_admin,
                 created_time_ms: r.created_time_ms.try_into().unwrap(),
@@ -378,8 +367,8 @@ AND
                 price_sat: r.price_sat.try_into().unwrap(),
                 fee_rate_basis_points: r.fee_rate_basis_points.try_into().unwrap(),
                 submitted: r.submitted,
-                reviewed: r.reviewed,
-                approved: r.approved,
+                viewed: r.viewed,
+		        approved: r.approved,
                 deactivated_by_seller: r.deactivated_by_seller,
                 deactivated_by_admin: r.deactivated_by_admin,
                 created_time_ms: r.created_time_ms.try_into().unwrap(),
@@ -407,7 +396,7 @@ AND
         public_id: &str,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "UPDATE bounties SET reviewed = true, approved = true WHERE public_id = ?",
+            "UPDATE bounties SET viewed = true, approved = true WHERE public_id = ?",
             public_id,
         )
         .execute(&mut **db)
@@ -420,7 +409,7 @@ AND
         public_id: &str,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "UPDATE bounties SET reviewed = true, approved = false WHERE public_id = ?",
+            "UPDATE bounties SET viewed = true, approved = false WHERE public_id = ?",
             public_id,
         )
         .execute(&mut **db)
@@ -480,7 +469,7 @@ from
 WHERE
  bounties.submitted
 AND
- NOT bounties.reviewed
+ NOT bounties.viewed
 ;",
         )
         .fetch_one(&mut **db)
@@ -703,7 +692,7 @@ impl BountyCard {
         let bounty_cards =
             sqlx::query!("
 select
- bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  bounties
 LEFT JOIN
@@ -743,9 +732,9 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
-                    deactivated_by_seller: r.deactivated_by_seller.unwrap(),
+		            deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                 };
@@ -782,7 +771,7 @@ OFFSET ?
         let bounty_cards =
             sqlx::query!("
 select
- bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  bounties
 LEFT JOIN
@@ -816,8 +805,8 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
-                    approved: r.approved.unwrap(),
+                    viewed: r.viewed.unwrap(),
+		            approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
@@ -859,7 +848,7 @@ OFFSET ?
         let bounty_cards =
             sqlx::query!("
 select
- bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  bounties
 LEFT JOIN
@@ -875,7 +864,7 @@ ON
 WHERE
  bounties.submitted
 AND
- NOT bounties.reviewed
+ NOT bounties.viewed
 GROUP BY
  bounties.id
 ORDER BY bounties.created_time_ms DESC
@@ -893,7 +882,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
@@ -937,7 +926,7 @@ OFFSET ?
         let bounty_cards =
             sqlx::query!("
 select
- bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  bounties
 LEFT JOIN
@@ -971,7 +960,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
@@ -1015,7 +1004,7 @@ OFFSET ?
         let bounty_cards =
             sqlx::query!("
 select
- bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  bounties
 LEFT JOIN
@@ -1031,7 +1020,7 @@ ON
 WHERE
  bounties.submitted
 AND
- not bounties.reviewed
+ NOT bounties.viewed
 AND
  users.id = ?
 GROUP BY
@@ -1051,7 +1040,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
@@ -1095,7 +1084,7 @@ OFFSET ?
         let bounty_cards =
             sqlx::query!("
 select
- bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  bounties
 LEFT JOIN
@@ -1111,7 +1100,7 @@ ON
 WHERE
  not bounties.approved
 AND
- bounties.reviewed
+ NOT bounties.viewed
 AND
  users.id = ?
 GROUP BY
@@ -1131,7 +1120,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_admin.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
@@ -1171,7 +1160,7 @@ OFFSET ?
         let bounty_cards =
             sqlx::query!("
 select
- bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  bounties
 LEFT JOIN
@@ -1207,7 +1196,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_admin.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
@@ -1251,7 +1240,7 @@ OFFSET ?
         let bounty_cards =
             sqlx::query!("
 select
- bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  bounties
 LEFT JOIN
@@ -1267,7 +1256,7 @@ ON
 WHERE
  bounties.approved
 AND
- bounties.reviewed
+ bounties.viewed
 AND
  NOT (bounties.deactivated_by_seller OR bounties.deactivated_by_admin)
 AND
@@ -1289,7 +1278,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
@@ -1335,7 +1324,7 @@ OFFSET ?
         let bounty_cards =
             sqlx::query!("
 select
- bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ bounties.id, bounties.public_id, bounties.user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  bounties
 LEFT JOIN
@@ -1357,7 +1346,7 @@ AND
 WHERE
  bounties.approved
 AND
- bounties.reviewed
+ bounties.viewed
 AND
  NOT (bounties.deactivated_by_seller OR bounties.deactivated_by_admin)
 AND
@@ -1379,7 +1368,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
@@ -1759,7 +1748,6 @@ impl Case {
         let seller_credit_sat: i64 = case.seller_credit_sat.try_into().unwrap();
         let created_time_ms: i64 = case.created_time_ms.try_into().unwrap();
         let payment_time_ms: i64 = case.payment_time_ms.try_into().unwrap();
-        let review_time_ms: i64 = case.review_time_ms.try_into().unwrap();
 
         let mut tx = db
             .begin()
@@ -1767,7 +1755,7 @@ impl Case {
             .map_err(|_| "failed to begin transaction.")?;
 
         let insert_result = sqlx::query!(
-            "INSERT INTO cases (public_id, buyer_user_id, seller_user_id, quantity, bounty_id, case_details, amount_owed_sat, seller_credit_sat, paid, awarded, canceled_by_seller, canceled_by_buyer, reviewed, review_text, review_rating, invoice_hash, invoice_payment_request, created_time_ms, payment_time_ms, review_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO cases (public_id, buyer_user_id, seller_user_id, quantity, bounty_id, case_details, amount_owed_sat, seller_credit_sat, paid, awarded, canceled_by_seller, canceled_by_buyer, invoice_hash, invoice_payment_request, created_time_ms, payment_time_ms ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             case.public_id,
             case.buyer_user_id,
             case.seller_user_id,
@@ -1780,14 +1768,10 @@ impl Case {
             case.awarded,
             case.canceled_by_seller,
             case.canceled_by_buyer,
-            case.reviewed,
-            case.review_text,
-            case.review_rating,
             case.invoice_hash,
             case.invoice_payment_request,
             created_time_ms,
             payment_time_ms,
-            review_time_ms,
         )
             .execute(&mut *tx)
             .await
@@ -1825,42 +1809,6 @@ AND
         Ok(insert_result.last_insert_rowid() as _)
     }
 
-    /// Sets a new review for a given case.
-    ///
-    /// Sets the "review_time_ms" field to current time if this is the first review.
-    /// Otherwise, keeps the existing value for "review_time_ms"
-    pub async fn set_case_review(
-        db: &mut Connection<Db>,
-        public_id: &str,
-        review_rating: u32,
-        review_text: &str,
-        review_time_ms: u64,
-    ) -> Result<(), sqlx::Error> {
-        let review_time_ms_i64: i64 = review_time_ms.try_into().unwrap();
-
-        sqlx::query!(
-            "
-        UPDATE
-         cases
-        SET
-         reviewed = true,
-         review_rating = ?,
-         review_text = ?,
-         review_time_ms = ?
-        WHERE
-         public_id = ?
-        ;",
-            review_rating,
-            review_text,
-            review_time_ms_i64,
-            public_id,
-        )
-        .execute(&mut **db)
-        .await?;
-
-        Ok(())
-    }
-
     pub async fn single(db: &mut Connection<Db>, id: i32) -> Result<Case, sqlx::Error> {
         let case = sqlx::query!("select * from cases WHERE id = ?;", id)
             .fetch_one(&mut **db)
@@ -1878,14 +1826,10 @@ AND
                 awarded: r.awarded,
                 canceled_by_seller: r.canceled_by_seller,
                 canceled_by_buyer: r.canceled_by_buyer,
-                reviewed: r.reviewed,
                 invoice_hash: r.invoice_hash,
                 invoice_payment_request: r.invoice_payment_request,
-                review_rating: r.review_rating.try_into().unwrap(),
-                review_text: r.review_text,
                 created_time_ms: r.created_time_ms.try_into().unwrap(),
                 payment_time_ms: r.payment_time_ms.try_into().unwrap(),
-                review_time_ms: r.review_time_ms.try_into().unwrap(),
             })
             .await?;
 
@@ -1912,14 +1856,10 @@ AND
                 awarded: r.awarded,
                 canceled_by_seller: r.canceled_by_seller,
                 canceled_by_buyer: r.canceled_by_buyer,
-                reviewed: r.reviewed,
                 invoice_hash: r.invoice_hash,
                 invoice_payment_request: r.invoice_payment_request,
-                review_rating: r.review_rating.try_into().unwrap(),
-                review_text: r.review_text,
                 created_time_ms: r.created_time_ms.try_into().unwrap(),
                 payment_time_ms: r.payment_time_ms.try_into().unwrap(),
-                review_time_ms: r.review_time_ms.try_into().unwrap(),
             })
             .await?;
 
@@ -1946,14 +1886,10 @@ AND
                 awarded: r.awarded,
                 canceled_by_seller: r.canceled_by_seller,
                 canceled_by_buyer: r.canceled_by_buyer,
-                reviewed: r.reviewed,
                 invoice_hash: r.invoice_hash,
                 invoice_payment_request: r.invoice_payment_request,
-                review_rating: r.review_rating.try_into().unwrap(),
-                review_text: r.review_text,
                 created_time_ms: r.created_time_ms.try_into().unwrap(),
                 payment_time_ms: r.payment_time_ms.try_into().unwrap(),
-                review_time_ms: r.review_time_ms.try_into().unwrap(),
             })
             .await?;
 
@@ -1993,14 +1929,10 @@ AND
             awarded: r.awarded,
             canceled_by_seller: r.canceled_by_seller,
             canceled_by_buyer: r.canceled_by_buyer,
-            reviewed: r.reviewed,
             invoice_hash: r.invoice_hash,
             invoice_payment_request: r.invoice_payment_request,
-            review_rating: r.review_rating.try_into().unwrap(),
-            review_text: r.review_text,
             created_time_ms: r.created_time_ms.try_into().unwrap(),
             payment_time_ms: r.payment_time_ms.try_into().unwrap(),
-            review_time_ms: r.review_time_ms.try_into().unwrap(),
         })
         .try_collect::<Vec<_>>()
         .await?;
@@ -2163,32 +2095,9 @@ AND
         })
         .await?;
 
-        let weighted_average_rating = sqlx::query(
-            "
-            select
-             SUM(cases.amount_owed_sat * cases.review_rating * 1000) / SUM(cases.amount_owed_sat) as weighted_average
-            FROM
-             cases
-            WHERE
-             cases.reviewed
-            AND
-             cases.seller_user_id = ?
-            GROUP BY
-             cases.seller_user_id
-            ;")
-.bind(user_id)
-            .fetch_optional(&mut **db)
-            .map_ok(|maybe_r| maybe_r.map(|r| {
-                let average_rating_numerator: i64 = r.try_get("weighted_average").unwrap();
-                let average_rating: f32 = (average_rating_numerator as f32) / 1000.0;
-                average_rating
-            }))
-        .await?;
-
         let seller_info = SellerInfo {
             username: "".to_string(),
             total_amount_sold_sat: total_amount_sold_sat.unwrap_or(0),
-            weighted_average_rating: weighted_average_rating.unwrap_or(0.0),
         };
 
         // TODO: remove option from return type.
@@ -2204,7 +2113,7 @@ AND
         let limit = page_size;
         let seller_infos = sqlx::query(
                     "
-        SELECT weighted_average, total_amount_sold_sat, users.email
+        SELECT total_amount_sold_sat, users.email
         FROM
          users
         LEFT JOIN
@@ -2218,19 +2127,6 @@ AND
              cases.seller_user_id) as seller_infos
         ON
          users.id = seller_infos.awarded_seller_user_id
-        LEFT JOIN
-            (select
-             SUM(cases.amount_owed_sat * cases.review_rating * 1000) / SUM(cases.amount_owed_sat) as weighted_average, cases.seller_user_id as reviewed_seller_user_id
-            FROM
-             cases
-            WHERE
-             cases.reviewed
-            AND
-             cases.awarded
-            GROUP BY
-             cases.seller_user_id) as seller_infos
-        ON
-         users.id = seller_infos.reviewed_seller_user_id
         WHERE
          total_amount_sold_sat > 0
         ORDER BY
@@ -2248,11 +2144,6 @@ AND
                         let amount_sat_i64: i64 = r.try_get("total_amount_sold_sat").unwrap();
                         let amount_sat_u64: u64 = amount_sat_i64.try_into().unwrap();
                         amount_sat_u64
-                    },
-                    weighted_average_rating: {
-                        let average_rating_numerator: i64 = r.try_get("weighted_average").unwrap();
-                        let average_rating: f32 = (average_rating_numerator as f32) / 1000.0;
-                        average_rating
                     },
                 }})
             .try_collect::<Vec<_>>()
@@ -2327,7 +2218,7 @@ impl CaseCard {
         let cases = sqlx::query!(
             "
 select
- cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.invoice_hash, cases.invoice_payment_request, cases.created_time_ms, cases.payment_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  cases
 LEFT JOIN
@@ -2374,14 +2265,10 @@ OFFSET ?
                     awarded: r.awarded.unwrap(),
                     canceled_by_seller: r.canceled_by_seller.unwrap(),
                     canceled_by_buyer: r.canceled_by_buyer.unwrap(),
-                    reviewed: r.case_reviewed.unwrap(),
                     invoice_hash: r.invoice_hash.unwrap(),
                     invoice_payment_request: r.invoice_payment_request.unwrap(),
-                    review_rating: r.review_rating.unwrap().try_into().unwrap(),
-                    review_text: r.review_text.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                     payment_time_ms: r.payment_time_ms.unwrap().try_into().unwrap(),
-                    review_time_ms: r.review_time_ms.unwrap().try_into().unwrap(),
                 };
                 let l = r.id.map(|bounty_id| Bounty {
                     id: Some(bounty_id.try_into().unwrap()),
@@ -2392,7 +2279,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
@@ -2433,7 +2320,7 @@ OFFSET ?
         let cases = sqlx::query!(
             "
 select
- cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.invoice_hash, cases.invoice_payment_request, cases.created_time_ms, cases.payment_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  cases
 LEFT JOIN
@@ -2480,14 +2367,10 @@ OFFSET ?
                     awarded: r.awarded.unwrap(),
                     canceled_by_seller: r.canceled_by_seller.unwrap(),
                     canceled_by_buyer: r.canceled_by_buyer.unwrap(),
-                    reviewed: r.case_reviewed.unwrap(),
                     invoice_hash: r.invoice_hash.unwrap(),
                     invoice_payment_request: r.invoice_payment_request.unwrap(),
-                    review_rating: r.review_rating.unwrap().try_into().unwrap(),
-                    review_text: r.review_text.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                     payment_time_ms: r.payment_time_ms.unwrap().try_into().unwrap(),
-                    review_time_ms: r.review_time_ms.unwrap().try_into().unwrap(),
                 };
                 let l = r.id.map(|bounty_id| Bounty {
                     id: Some(bounty_id.try_into().unwrap()),
@@ -2498,7 +2381,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
@@ -2539,7 +2422,7 @@ OFFSET ?
         let cases = sqlx::query!(
             "
 select
- cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.invoice_hash, cases.invoice_payment_request, cases.created_time_ms, cases.payment_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  cases
 LEFT JOIN
@@ -2586,14 +2469,10 @@ OFFSET ?
                     awarded: r.awarded.unwrap(),
                     canceled_by_seller: r.canceled_by_seller.unwrap(),
                     canceled_by_buyer: r.canceled_by_buyer.unwrap(),
-                    reviewed: r.case_reviewed.unwrap(),
                     invoice_hash: r.invoice_hash.unwrap(),
                     invoice_payment_request: r.invoice_payment_request.unwrap(),
-                    review_rating: r.review_rating.unwrap().try_into().unwrap(),
-                    review_text: r.review_text.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                     payment_time_ms: r.payment_time_ms.unwrap().try_into().unwrap(),
-                    review_time_ms: r.review_time_ms.unwrap().try_into().unwrap(),
                 };
                 let l = r.id.map(|bounty_id| Bounty {
                     id: Some(bounty_id.try_into().unwrap()),
@@ -2604,7 +2483,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),
@@ -2645,7 +2524,7 @@ OFFSET ?
         let cases = sqlx::query!(
             "
 select
- cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.reviewed as case_reviewed, cases.invoice_hash, cases.invoice_payment_request, cases.review_rating, cases.review_text, cases.created_time_ms, cases.payment_time_ms, cases.review_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.reviewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
+ cases.id as case_id, cases.public_id as case_public_id, cases.buyer_user_id as case_buyer_user_id, cases.seller_user_id as case_seller_user_id, cases.quantity as case_quantity, cases.bounty_id as case_bounty_id, cases.case_details, cases.amount_owed_sat, cases.seller_credit_sat, cases.paid, cases.awarded, cases.canceled_by_seller, cases.canceled_by_buyer, cases.invoice_hash, cases.invoice_payment_request, cases.created_time_ms, cases.payment_time_ms, bounties.id, bounties.public_id as bounty_public_id, bounties.user_id as bounty_user_id, bounties.title, bounties.description, bounties.price_sat, bounties.fee_rate_basis_points, bounties.submitted, bounties.viewed, bounties.approved, bounties.deactivated_by_seller, bounties.deactivated_by_admin, bounties.created_time_ms as bounty_created_time_ms, bountyimages.id as image_id, bountyimages.public_id as image_public_id, bountyimages.bounty_id, bountyimages.image_data, bountyimages.is_primary, users.id as rocket_auth_user_id, users.email as rocket_auth_user_username
 from
  cases
 LEFT JOIN
@@ -2695,14 +2574,10 @@ OFFSET ?
                     awarded: r.awarded.unwrap(),
                     canceled_by_seller: r.canceled_by_seller.unwrap(),
                     canceled_by_buyer: r.canceled_by_buyer.unwrap(),
-                    reviewed: r.case_reviewed.unwrap(),
                     invoice_hash: r.invoice_hash.unwrap(),
                     invoice_payment_request: r.invoice_payment_request.unwrap(),
-                    review_rating: r.review_rating.unwrap().try_into().unwrap(),
-                    review_text: r.review_text.unwrap(),
                     created_time_ms: r.created_time_ms.unwrap().try_into().unwrap(),
                     payment_time_ms: r.payment_time_ms.unwrap().try_into().unwrap(),
-                    review_time_ms: r.review_time_ms.unwrap().try_into().unwrap(),
                 };
                 let l = r.id.map(|bounty_id| Bounty {
                     id: Some(bounty_id.try_into().unwrap()),
@@ -2713,7 +2588,7 @@ OFFSET ?
                     price_sat: r.price_sat.unwrap().try_into().unwrap(),
                     fee_rate_basis_points: r.fee_rate_basis_points.unwrap().try_into().unwrap(),
                     submitted: r.submitted.unwrap(),
-                    reviewed: r.reviewed.unwrap(),
+                    viewed: r.viewed.unwrap(),
                     approved: r.approved.unwrap(),
                     deactivated_by_seller: r.deactivated_by_seller.unwrap(),
                     deactivated_by_admin: r.deactivated_by_admin.unwrap(),

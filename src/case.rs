@@ -2,11 +2,10 @@ use crate::base::BaseContext;
 use crate::config::Config;
 use crate::db::Db;
 use crate::lightning;
-use crate::models::{Bounty, Case, ReviewInput, RocketAuthUser};
+use crate::models::{Bounty, Case, RocketAuthUser};
 use crate::user_account::ActiveUser;
 use crate::util;
 use rocket::fairing::AdHoc;
-use rocket::form::Form;
 use rocket::request::FlashMessage;
 use rocket::response::Flash;
 use rocket::response::Redirect;
@@ -242,76 +241,6 @@ async fn mark_case_as_canceled_by_buyer(
         .map_err(|_| "failed to mark case as canceled by buyer.".to_string())
 }
 
-#[post("/<id>/new_review", data = "<case_review_form>")]
-async fn new_review(
-    id: &str,
-    case_review_form: Form<ReviewInput>,
-    mut db: Connection<Db>,
-    active_user: ActiveUser,
-    _admin_user: Option<AdminUser>,
-) -> Result<Flash<Redirect>, Flash<Redirect>> {
-    let case_review_info = case_review_form.into_inner();
-    match create_case_review(id, case_review_info, &mut db, active_user.user.clone()).await {
-        Ok(_) => Ok(Flash::success(
-            Redirect::to(format!("/{}/{}", "case", id)),
-            "Review Successfully Posted.",
-        )),
-        Err(e) => {
-            error_!("DB insertion error: {}", e);
-            Err(Flash::error(
-                Redirect::to(format!("/{}/{}", "case", id)),
-                e,
-            ))
-        }
-    }
-}
-
-async fn create_case_review(
-    case_id: &str,
-    case_review_info: ReviewInput,
-    db: &mut Connection<Db>,
-    user: User,
-) -> Result<(), String> {
-    let now = util::current_time_millis();
-    let case = Case::single_by_public_id(db, case_id)
-        .await
-        .map_err(|_| "failed to get case")?;
-    let review_rating = case_review_info.review_rating.unwrap_or(0);
-    let review_text = case_review_info.review_text;
-
-    if !case.awarded {
-        return Err("Cannot post review for case that is not awarded.".to_string());
-    };
-    if user.id() != case.buyer_user_id {
-        return Err("User is not the buyer.".to_string());
-    };
-    if !(1..=5).contains(&review_rating) {
-        return Err("Review rating must be between 1 and 5.".to_string());
-    };
-    if review_text.len() > 4096 {
-        return Err("Review text is too long.".to_string());
-    };
-
-    let new_review_time_ms = if case.review_time_ms > 0 {
-        case.review_time_ms
-    } else {
-        now
-    };
-
-    Case::set_case_review(
-        db,
-        case_id,
-        review_rating,
-        &review_text,
-        new_review_time_ms,
-    )
-    .await
-    .map_err(|e| {
-        error_!("DB insertion error: {}", e);
-        "Case Review could not be inserted due an internal error.".to_string()
-    })
-}
-
 #[get("/<id>")]
 async fn index(
     flash: Option<FlashMessage<'_>>,
@@ -332,7 +261,7 @@ pub fn case_stage() -> AdHoc {
     AdHoc::on_ignite("Case Stage", |rocket| async {
         rocket.mount(
             "/case",
-            routes![index, award, seller_cancel, buyer_cancel, new_review],
+            routes![index, award, seller_cancel, buyer_cancel],
         )
     })
 }

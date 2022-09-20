@@ -208,7 +208,7 @@ pub fn stage(config: Config) -> AdHoc {
             .attach(crate::update_pgp_info::update_pgp_info_stage())
             .attach(crate::update_max_allowed_users::update_max_allowed_users_stage())
             .attach(crate::update_user_pgp_info::update_user_pgp_info_stage())
-            .attach(crate::review_pending_bounties::review_pending_bounties_stage())
+            .attach(crate::view_pending_bounties::view_pending_bounties_stage())
             .attach(crate::delete_bounty::delete_bounty_stage())
             .attach(crate::account::account_stage())
             .attach(crate::my_unsubmitted_bounties::my_unsubmitted_bounties_stage())

@@ -6,7 +6,7 @@
       <th>Case</th>
       <th>Bounty</th>
       <th>Sale Amount</th>
-      <th>Rating</th>
+      <th>Reputation</th>
     </tr>
   </thead>
 
@@ -24,7 +24,6 @@
       <td><a href="/case/{{ case_card.case.public_id }}">{{ case_card.case.public_id }}</a></td>
       <td>{% if case_card.bounty %}<a href="/bounty/{{ case_card.bounty.public_id }}">{{ case_card.bounty.title }}{% else %}Not found{% endif %}</a></td>
       <td>{{ case_card.case.amount_owed_sat }} sats</td>
-      <td>{% if case_card.case.reviewed %}{{ case_card.case.review_rating }}{% else %}Unrated{% endif %}</td>
     </tr>
   </tbody>
   {% endfor %}

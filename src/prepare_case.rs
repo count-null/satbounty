@@ -174,14 +174,10 @@ async fn create_case(
         awarded: false,
         canceled_by_seller: false,
         canceled_by_buyer: false,
-        reviewed: false,
         invoice_hash: util::to_hex(&invoice.r_hash),
         invoice_payment_request: invoice.payment_request,
-        review_rating: 0,
-        review_text: "".to_string(),
         created_time_ms: now,
         payment_time_ms: 0,
-        review_time_ms: 0,
     };
 
     match Case::insert(case, MAX_UNPAID_ORDERS, db).await {

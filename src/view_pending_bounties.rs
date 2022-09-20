@@ -55,12 +55,12 @@ async fn index(
     let context = Context::raw(flash, db, page_num, user, Some(admin_user))
         .await
         .map_err(|_| "failed to get template context.")?;
-    Ok(Template::render("reviewpendingbounties", context))
+    Ok(Template::render("viewpendingbounties", context))
 }
 
-pub fn review_pending_bounties_stage() -> AdHoc {
+pub fn view_pending_bounties_stage() -> AdHoc {
     AdHoc::on_ignite("Pending Bounties Stage", |rocket| async {
-        rocket.mount("/review_pending_bounties", routes![index])
+        rocket.mount("/view_pending_bounties", routes![index])
         // .mount("/bounty", routes![new])
     })
 }

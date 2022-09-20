@@ -17,7 +17,6 @@ struct Context {
     flash: Option<(String, String)>,
     visited_user: RocketAuthUser,
     amount_sold_sat: u64,
-    weighted_average_rating: f32,
     case_cards: Vec<CaseCard>,
     page_num: u32,
 }
@@ -49,15 +48,13 @@ impl Context {
         .map_err(|_| "failed to get received cases for user.")?;
         let seller_info = Case::seller_info_for_user(&mut db, visited_user.id.unwrap())
             .await
-            .map_err(|_| "failed to get weighted average rating for user.")?;
-        let weighted_average_rating = seller_info.weighted_average_rating;
+            .map_err(|_| "failed to get reputation for user.")?;
         let amount_sold_sat = seller_info.total_amount_sold_sat;
         Ok(Context {
             base_context,
             flash,
             visited_user,
             amount_sold_sat,
-            weighted_average_rating,
             case_cards,
             page_num,
         })

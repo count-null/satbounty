@@ -29,7 +29,7 @@ Username: {{ user.email }}.
   <p><!--Nothing to see here --></p>
   <div class="row">
     <h5>Bounties</h5>
-    <a href="/review_pending_bounties">Review Pending Bounties</a>
+    <a href="/view_pending_bounties">View Pending Bounties</a>
     <br>
     <a href="/deactivated_bounties">Deactivated Bounties</a>
   </div>

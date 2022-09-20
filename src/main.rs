@@ -38,7 +38,7 @@ mod case;
 mod case_expiry;
 mod payment_processor;
 mod prepare_case;
-mod review_pending_bounties;
+mod view_pending_bounties;
 mod routes;
 mod search;
 mod seller_history;

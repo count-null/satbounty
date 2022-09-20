@@ -54,7 +54,7 @@
             <a class="navbar-brand" href="/top_sellers">Top Sellers</a>
             {% if base_context.user %}
             {% if base_context.admin_user %}
-            <a class="navbar-brand" href="/review_pending_bounties">Pending Bounties{% if base_context.admin_info %} ({{ base_context.admin_info.num_pending_bounties }}){% endif %}</a>
+            <a class="navbar-brand" href="/view_pending_bounties">Pending Bounties{% if base_context.admin_info %} ({{ base_context.admin_info.num_pending_bounties }}){% endif %}</a>
             <a class="navbar-brand" href="/admin">Admin</a>
             {% else %}
             Welcome, <a class="navbar-brand" href="/user/{{ base_context.user.email }}">{{ base_context.user.email }}</a>

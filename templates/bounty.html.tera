@@ -33,9 +33,9 @@
       <button class="small" type="submit">Deactivate Bounty</button>
     </form>
     {% endif %}
-    {% elif bounty_display.bounty.reviewed and not bounty_display.bounty.approved %}
+    {% elif bounty_display.bounty.viewed and not bounty_display.bounty.approved %}
     <h5>Rejected bounty</h5>
-    {% elif bounty_display.bounty.submitted and not bounty_display.bounty.reviewed %}
+    {% elif bounty_display.bounty.submitted and not bounty_display.bounty.viewed %}
     <h5>Pending Bounty (waiting for admin approval)</h5>
     {% if admin_user %}
     <form class="inline" action="/bounty/{{ bounty_display.bounty.public_id }}/approve" method="post">
