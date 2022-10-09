@@ -2550,9 +2550,15 @@
           "name": "max_allowed_users",
           "ordinal": 5,
           "type_info": "Int64"
+        },
+        {
+          "name": "market_info",
+          "ordinal": 6,
+          "type_info": "Text"
         }
       ],
       "nullable": [
+        false,
         false,
         false,
         false,
