@@ -30,6 +30,16 @@
     },
     "query": "UPDATE adminsettings SET fee_rate_basis_points = ?"
   },
+  "1286eebb42ebc4ed8cd48fd1fb72dc9e9e029a536f6981ed74a28d2a050ee5fa": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "UPDATE adminsettings SET market_info = ?"
+  },
   "1dec33bb907789c678357a383a33faa10b0aaf9b290a0eed03dd12b52b254a18": {
     "describe": {
       "columns": [
@@ -792,6 +802,16 @@
     },
     "query": "\nselect\n COUNT(bounties.id) as num_pending_bounties\nfrom\n bounties\nWHERE\n bounties.submitted\nAND\n NOT bounties.viewed\n;"
   },
+  "378c0e52c8f12f5db0256f8f5a9b575db225e2ada03650237c6e78e7d844f1be": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 6
+      }
+    },
+    "query": "\nINSERT INTO\n adminsettings (market_name, market_info, fee_rate_basis_points, user_bond_price_sat, pgp_key, max_allowed_users)\nSELECT ?, ?, ?, ?, ?, ?\nWHERE NOT EXISTS(SELECT 1 FROM adminsettings)\n;"
+  },
   "39d6cd7e415b7b2ca85a27a8339cb4ed7cf44f1fc718240ebd7d8371dfc6eb11": {
     "describe": {
       "columns": [],
@@ -1005,16 +1025,6 @@
       }
     },
     "query": "\nUPDATE\n cases\nSET\n canceled_by_seller = true, case_details= ''\nWHERE\n id = ?\nAND\n not (awarded OR canceled_by_seller OR canceled_by_buyer)\n;"
-  },
-  "5a7b3431b2f062cf357acb7546eb00b0519388b45cbcf3e22f44877984a5f73a": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Right": 5
-      }
-    },
-    "query": "\nINSERT INTO\n adminsettings (market_name, fee_rate_basis_points, user_bond_price_sat, pgp_key, max_allowed_users)\nSELECT ?, ?, ?, ?, ?\nWHERE NOT EXISTS(SELECT 1 FROM adminsettings)\n;"
   },
   "5e3dc6e4bd11ae7be06d4e117927f9a137bc0b87adf24c99226e417e6cc054a9": {
     "describe": {
