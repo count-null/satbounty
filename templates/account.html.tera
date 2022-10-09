@@ -61,5 +61,8 @@
   </div>
 </div>
 
+<a class="" href="/logout">Log out</a>
+
+
 
 {% endblock body %}

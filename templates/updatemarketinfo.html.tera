@@ -1,0 +1,16 @@
+{% extends "base" %}
+{% block body %}
+
+<h3>Update Market Info</h3>
+<p>Market Info: {{ admin_settings.market_info|safe }}</p>
+<form action="/update_market_info/change" method="post">
+  <div class="flex-column" style="gap: 12px;">
+    <div>
+      <label for="market_info" class="input-label">Market Info</label>
+      <textarea placeholder="enter a description about this market..." name="market_info" id="market_info" value="" class="input-textarea"></textarea>
+    </div>
+    <button style="width: 100%" class="btn btn-primary" type="submit">Change Market Info</button>
+    </div>
+</form>
+
+{% endblock body %}

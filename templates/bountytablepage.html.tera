@@ -1,51 +1,26 @@
-<table class="u-full-width">
-  <thead>
-    <tr>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
 
+<div class="flex-column">
   {% for card in bounty_cards %}
-  <tbody>
-    <tr>
-      <td>
+ <div class="item">
+  <img class="item-lightning" src="/images/lightning.svg"/>
+  <div>
+
 	<a href="/bounty/{{ card.bounty.public_id }}">
-          {% if card.image %}
-	  <img src="data:image/jpeg;base64,{{ card.image.image_data_base64 }}" style="width:128px;height:128px;" />
-          {% else %}
-	  <img src="/images/default_bounty.png" style="width:128px;height:128px;" />
-          {% endif %}
+	  <h4 class="item-title">{{ card.bounty.title }}</h4>
 	</a>
-      </td>
-      <td>
-	<a href="/bounty/{{ card.bounty.public_id }}">
-	  <h4>{{ card.bounty.title }}</h4>
-	</a>
-	<a href="/bounty/{{ card.bounty.public_id }}">
-	  {{ card.bounty.price_sat }} sats
-	</a>
-	<br>
-	<a href="/user/{{ card.user.username }}">
-	  {{ card.user.username }}
-	</a>
-      </td>
-    </tr>
-  </tbody>
+<div class="flex align-items-center" style="gap: 8px; height: 14px;">
+  <p>{{ card.bounty.price_sat }} sats</p>
+  <p>\</p>
+  <p># cases</p>
+  <p>\</p>
+  <a href="/user/{{ card.user.username }}">@{{ card.user.username }} </a>
+  </div>
+</div>
+
+  </div>
   {% endfor %}
-</table>
 
+</div>
 
-{% if page_num > 1 %}
-<form class="inline" action="" method="get">
-  <input type="hidden" id="page_num" name="page_num" value="{{ page_num - 1 }}">
-  <button class="link" type="submit">Prev</button>
-</form>
-{% else %}
-Prev
-{% endif %}
-<span> - Page {{ page_num }} - </span>
-<form class="inline" action="" method="get">
-  <input type="hidden" id="page_num" name="page_num" value="{{ page_num + 1 }}">
-  <button class="link" type="submit">Next</button>
-</form>
+<span>{% if page_num > 1 %}<a href="?page_num={{ page_num - 1 }}">Prev</a>{% else %}Prev{% endif %} - Page {{ page_num }} - <a href="?page_num={{ page_num + 1 }}">Next</a></span>
+

@@ -46,6 +46,7 @@ mod top_sellers;
 mod update_fee_rate;
 mod update_bounty_images;
 mod update_market_name;
+mod update_market_info;
 mod update_max_allowed_users;
 mod update_pgp_info;
 mod update_user_bond_price;

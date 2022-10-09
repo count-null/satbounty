@@ -98,6 +98,7 @@ pub struct RocketAuthUser {
 pub struct AdminSettings {
     pub id: Option<i32>,
     pub market_name: String,
+    pub market_info: String,
     pub fee_rate_basis_points: u32,
     pub user_bond_price_sat: u64,
     pub pgp_key: String,
@@ -114,6 +115,11 @@ pub struct UserSettings {
 #[derive(Debug, FromForm)]
 pub struct MarketNameInput {
     pub market_name: String,
+}
+
+#[derive(Debug, FromForm)]
+pub struct MarketInfoInput {
+    pub market_info: String,
 }
 
 #[derive(Debug, FromForm)]
@@ -246,6 +252,7 @@ impl Default for AdminSettings {
         AdminSettings {
             id: None,
             market_name: "Sat Bounty".to_string(),
+            market_info: "About this market...".to_string(),
             fee_rate_basis_points: 500,
             user_bond_price_sat: 1,
             pgp_key: "".to_string(),
@@ -337,7 +344,7 @@ AND
                 public_id: r.public_id,
                 user_id: r.user_id.try_into().unwrap(),
                 title: r.title,
-                description: r.description,
+                description: markdown::to_html(&r.description),
                 price_sat: r.price_sat.try_into().unwrap(),
                 fee_rate_basis_points: r.fee_rate_basis_points.try_into().unwrap(),
                 submitted: r.submitted,
@@ -363,7 +370,7 @@ AND
                 public_id: r.public_id,
                 user_id: r.user_id.try_into().unwrap(),
                 title: r.title,
-                description: r.description,
+                description: markdown::to_html(&r.description),
                 price_sat: r.price_sat.try_into().unwrap(),
                 fee_rate_basis_points: r.fee_rate_basis_points.try_into().unwrap(),
                 submitted: r.submitted,
@@ -1560,6 +1567,7 @@ impl AdminSettings {
                 maybe_r.map(|r| AdminSettings {
                     id: Some(r.id.try_into().unwrap()),
                     market_name: r.market_name,
+                    market_info: markdown::to_html(&r.market_info),
                     fee_rate_basis_points: r.fee_rate_basis_points.try_into().unwrap(),
                     user_bond_price_sat: r.user_bond_price_sat.try_into().unwrap(),
                     pgp_key: r.pgp_key,
@@ -1580,11 +1588,12 @@ impl AdminSettings {
         sqlx::query!(
             "
 INSERT INTO
- adminsettings (market_name, fee_rate_basis_points, user_bond_price_sat, pgp_key, max_allowed_users)
-SELECT ?, ?, ?, ?, ?
+ adminsettings (market_name, market_info, fee_rate_basis_points, user_bond_price_sat, pgp_key, max_allowed_users)
+SELECT ?, ?, ?, ?, ?, ?
 WHERE NOT EXISTS(SELECT 1 FROM adminsettings)
 ;",
             admin_settings.market_name,
+            admin_settings.market_info,
             admin_settings.fee_rate_basis_points,
             user_bond_price_sat_i64,
             admin_settings.pgp_key,
@@ -1603,6 +1612,19 @@ WHERE NOT EXISTS(SELECT 1 FROM adminsettings)
         AdminSettings::insert_if_doesnt_exist(db).await?;
 
         sqlx::query!("UPDATE adminsettings SET market_name = ?", new_market_name)
+            .execute(&mut **db)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn set_market_info(
+        db: &mut Connection<Db>,
+        new_market_info: &str,
+    ) -> Result<(), sqlx::Error> {
+        AdminSettings::insert_if_doesnt_exist(db).await?;
+
+        sqlx::query!("UPDATE adminsettings SET market_info = ?", new_market_info)
             .execute(&mut **db)
             .await?;
 
@@ -1819,7 +1841,7 @@ AND
                 buyer_user_id: r.buyer_user_id.try_into().unwrap(),
                 seller_user_id: r.seller_user_id.try_into().unwrap(),
                 bounty_id: r.bounty_id.try_into().unwrap(),
-                case_details: r.case_details,
+                case_details: markdown::to_html(&r.case_details),
                 amount_owed_sat: r.amount_owed_sat.try_into().unwrap(),
                 seller_credit_sat: r.seller_credit_sat.try_into().unwrap(),
                 paid: r.paid,
@@ -1849,7 +1871,7 @@ AND
                 buyer_user_id: r.buyer_user_id.try_into().unwrap(),
                 seller_user_id: r.seller_user_id.try_into().unwrap(),
                 bounty_id: r.bounty_id.try_into().unwrap(),
-                case_details: r.case_details,
+                case_details: markdown::to_html(&r.case_details),
                 amount_owed_sat: r.amount_owed_sat.try_into().unwrap(),
                 seller_credit_sat: r.seller_credit_sat.try_into().unwrap(),
                 paid: r.paid,
@@ -1879,7 +1901,7 @@ AND
                 buyer_user_id: r.buyer_user_id.try_into().unwrap(),
                 seller_user_id: r.seller_user_id.try_into().unwrap(),
                 bounty_id: r.bounty_id.try_into().unwrap(),
-                case_details: r.case_details,
+                case_details: markdown::to_html(&r.case_details),
                 amount_owed_sat: r.amount_owed_sat.try_into().unwrap(),
                 seller_credit_sat: r.seller_credit_sat.try_into().unwrap(),
                 paid: r.paid,
@@ -1922,7 +1944,7 @@ AND
             buyer_user_id: r.buyer_user_id.try_into().unwrap(),
             seller_user_id: r.seller_user_id.try_into().unwrap(),
             bounty_id: r.bounty_id.try_into().unwrap(),
-            case_details: r.case_details,
+            case_details: markdown::to_html(&r.case_details),
             amount_owed_sat: r.amount_owed_sat.try_into().unwrap(),
             seller_credit_sat: r.seller_credit_sat.try_into().unwrap(),
             paid: r.paid,

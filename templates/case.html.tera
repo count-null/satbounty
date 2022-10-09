@@ -67,7 +67,7 @@
 	{% if not case.awarded and not case.canceled_by_seller and not case.canceled_by_buyer %}
 	{% if user %}
 	{% if case.buyer_user_id == user.id or case.seller_user_id == user.id or admin_user %}
-	<p><b>Case details</b>: <pre>{{ case.case_details }}</pre></p>
+	<p><b>Case details</b>: <pre>{{ case.case_details|safe }}</pre></p>
 	{% endif %}
 	{% endif %}
 	{% endif %}

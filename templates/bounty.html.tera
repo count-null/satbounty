@@ -84,6 +84,8 @@
       </div>
       <div class="one-half column">
 	<div class="container">
+    <div class="card">
+
 	  <h3>{{ bounty_display.bounty.title }}</h3>
 	  <p><b>Seller</b>: {% if bounty_display.user %}<a href="/user/{{bounty_display.user.username}}">{{ bounty_display.user.username }}</a>{% else %}Not found{% endif %}</p>
 	  <p><b>Price</b>: {{ bounty_display.bounty.price_sat }} sats</p>
@@ -92,8 +94,8 @@
 	  <p><b>Fee Rate</b>: Market will collect a {{ bounty_display.bounty.fee_rate_basis_points / 100 }}% fee rate</p>
 	  {% endif %}
 
-	  <p><b>Description</b>: {{ bounty_display.bounty.description }}</p>
-
+	  <p><b>Description</b>: {{ bounty_display.bounty.description|safe }}</p>
+    </div>
 	  {% if bounty_display.bounty.approved %}
 	  {% if not admin_user %}
 	  <form action="/prepare_case/{{ bounty_display.bounty.public_id }}" method="get">

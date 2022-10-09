@@ -1,34 +1,20 @@
 {% extends "base" %}
 {% block body %}
 
-<br>
-
-
-<div class="container">
-  <p><!--Nothing to see here --></p>
-
-  <div class="row">
-    <h4>Update Fee Rate</h4>
-
-    <p>Fee Rate: {{ admin_settings.fee_rate_basis_points / 100 }}%</p>
-
-    <form action="/update_fee_rate/change" method="post">
-      <div class="ten columns">
-        <input type="text" placeholder="enter a new fee rate in basis points..."
-               name="fee_rate_basis_points" id="fee_rate_basis_points" value="" autofocus
-               class="u-full-width {% if flash %}field-{{flash.0}}{% endif %}" />
-        {% if flash %}
+<h3>Update Fee Rate</h3>
+<p>Fee Rate: {{ admin_settings.fee_rate_basis_points / 100 }}%</p>
+<form action="/update_fee_rate/change" method="post">
+  <div class="flex-column" style="gap: 12px;">
+    <div>
+      <input type="text" class="input {% if flash %}field-{{flash.0}}{% endif %}" placeholder="enter a new fee rate in basis points..." name="fee_rate_basis_points" id="fee_rate_basis_points" autofocus>
+      {% if flash %}
         <small class="field-{{flash.0}}-msg">
           {{ flash.1 }}
         </small>
         {% endif %}
-      </div>
-      <div class="two columns">
-        <input type="submit" value="Change Fee Rate">
-      </div>
-    </form>
-  </div>
-
-</div>
+    </div>
+    <button style="width: 100%" class="btn btn-primary" type="submit">Change Fee Rate</button>
+    </div>
+</form>
 
 {% endblock body %}

@@ -203,6 +203,7 @@ pub fn stage(config: Config) -> AdHoc {
             .attach(crate::user::user_stage())
             .attach(crate::user_profile::user_profile_stage())
             .attach(crate::update_market_name::update_market_name_stage())
+            .attach(crate::update_market_info::update_market_info_stage())
             .attach(crate::update_fee_rate::update_fee_rate_stage())
             .attach(crate::update_user_bond_price::update_user_bond_price_stage())
             .attach(crate::update_pgp_info::update_pgp_info_stage())

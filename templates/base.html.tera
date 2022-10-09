@@ -4,94 +4,42 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-cpWN7UDefuTvemH3imAmP4mcNMFoajrssLj1AqAsYsljN2q/DVv+3lkFfFFDPftv">
-    <link href="/css/fonts.css" rel="stylesheet" type="text/css" integrity="sha384-+V7zwFBtqv45p4rfFrET4/WPY/QVClsBTksBSaL+r6uvN5+R3Jcl9qgKiesDT62e">
-    <link rel="stylesheet" href="/css/normalize.min.css" integrity="sha384-T4YHWV4w4NXcWFudaKGJUPUVni3hf/EtUh0We8V238hBDuUkcvYKgxMM4/BzmcE8">
-    <link rel="stylesheet" href="/css/skeleton.min.css" integrity="sha384-55QbolHN4nRdIgkcKN/C3OzTWsKISb5s84GCeOXxxkAFDS/zPoqSS6rinw1CqF1F">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/png" href="/images/favicon.ico">
-
-    <style>
-      html, body {
-	  height: 100%;
-      }
-
-      .table-container {
-	  display: table;
-	  height: 100%;
-	  width: 100%;
-      }
-
-      .table-block {
-	  display: table-row;
-	  height: 1px;
-      }
-
-      .footer-push {
-	  height: auto;
-      }
-
-      #footer {
-	  /* Placeholder footer styles */
-	  text-align: center;
-      }
-
-    </style>
-
     <title>{{ base_context.admin_settings.market_name }}</title>
 </head>
 
 <body>
-
-  <div class="table-container">
-    <div class="table-block footer-push">
-
-      <nav class="navbar navbar-expand-lg navbar-dark bg-success">
-        <div class="container-fluid">
-          <a class="navbar-brand" href="/">{{ base_context.admin_settings.market_name }}</a>
-          <div>
-            <a class="navbar-brand" href="/about">About</a>
-            <a class="navbar-brand" href="/top_sellers">Top Sellers</a>
-            {% if base_context.user %}
-            {% if base_context.admin_user %}
-            <a class="navbar-brand" href="/view_pending_bounties">Pending Bounties{% if base_context.admin_info %} ({{ base_context.admin_info.num_pending_bounties }}){% endif %}</a>
-            <a class="navbar-brand" href="/admin">Admin</a>
-            {% else %}
-            Welcome, <a class="navbar-brand" href="/user/{{ base_context.user.email }}">{{ base_context.user.email }}</a>
-            <a class="navbar-brand" href="/my_processing_cases">Cases{% if base_context.account_info %} ({{ base_context.account_info.num_unawarded_cases }}){% endif %}</a>
-            <a class="navbar-brand" href="/account">Account{% if base_context.account_info %} ({{ base_context.account_info.account_balance_sat }} sats){% endif %}</a>
-            {% endif %}
-            {% endif %}
-            {% if not base_context.user %}
-            <a class="navbar-brand" href="/login">Login</a>
-            <a class="navbar-brand" href="/signup">Sign up</a>
-            {% else %}
-            <a class="navbar-brand" href="/logout">Log out</a>
-            {% endif %}
-          </div>
-      </nav>
-
-      <div style="text-align: center;">
-        <br>
-
-        {% block body %}
-        {% endblock body %}
+  <div class="flex-container">
+    <nav class="primary-nav">
+      <a class="nav-brand" href="/">{{ base_context.admin_settings.market_name }}</a>
+      <div class="nav-items">
+        <a class="" href="/about">About</a>
+        <a class="" href="/top_sellers">Top Sellers</a>
+        {% if base_context.user %}
+        {% if base_context.admin_user %}
+        <a class="" href="/view_pending_bounties">Pending Bounties{% if base_context.admin_info %} ({{ base_context.admin_info.num_pending_bounties }}){% endif %}</a>
+        <a class="" href="/admin">Admin</a>
+        {% else %}
+        <a class="" href="/my_processing_cases">Cases{% if base_context.account_info %} ({{ base_context.account_info.num_unawarded_cases }}){% endif %}</a>
+        <a class="" href="/account">@{{ base_context.user.email }}{% if base_context.account_info %} ({{ base_context.account_info.account_balance_sat }} sats){% endif %}</a>
+        {% endif %}
+        {% endif %}
+        {% if not base_context.user %}
+        <a class="" href="/signup">Sign up</a>
+        <a class="btn" href="/login">Login</a>
+        {% endif %}
       </div>
-
-    </div> <!-- end primary div.table-block -->
-
-
-    <div class="table-block">
-      <!-- Page Footer Layout
-           –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-      <div class="container">
-        <footer id="footer" class="twelve columns">
-          Powered by Sat Bounty
-        </footer>
-      </div> <!-- end footer div.container -->
-    </div>  <!-- end footer div.table-block -->
+    </nav>
+    <div style="text-align: center;">
+      <br>
+      {% block body %}
+      {% endblock body %}
+    </div>
   </div>
-
 </body>
+<footer id="footer" class="">
+  satbounty is <a href="https://github.com/count-null/satbounty"><img src="/images/github.svg"></a> open oource
+</footer>
 
 </html>

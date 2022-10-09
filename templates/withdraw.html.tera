@@ -1,35 +1,21 @@
 {% extends "base" %}
 {% block body %}
 
-<div class="container">
-  <p><!--Nothing to see here --></p>
-
-  <div class="row">
-
-    {% if flash %}
-    <small class="field-{{flash.0}}-msg">
-      {{ flash.1 }}
-    </small>
-    {% endif %}
-
-    <h3>Withdraw</h3>
-
-    <p><b>Account Balance</b>: {{ account_balance_sat }} sats</p>
-    <p><a href="/my_account_balance">View Account Balance</a></p>
-
-    <form action="/withdraw/new" method="post">
-      <div class="ten columns">
-        <input type="text" placeholder="enter a lightning invoice payment request..."
-	       name="invoice_payment_request" id="invoice_payment_request" value="" autofocus
-	       class="u-full-width {% if flash %}field-{{flash.0}}{% endif %}" />
-      </div>
-      <div class="two columns">
-        <input type="submit" value="withdraw funds">
-      </div>
-    </form>
-
-  </div>
-</div>
-
+<h3>Withdraw</h3>
+<p><b>Account Balance</b>: {{ account_balance_sat }} sats</p>
+<p><a href="/my_account_balance">View Account Balance</a></p>
+<form action="/withdraw/new" method="post">
+  <div class="flex-column" style="gap: 12px;">
+    <div>
+      <input type="text" class="input {% if flash %}field-{{flash.0}}{% endif %}" placeholder="enter a lightning invoice payment request..." name="invoice_payment_request" id="invoice_payment_request" autofocus>
+      {% if flash %}
+        <small class="field-{{flash.0}}-msg">
+          {{ flash.1 }}
+        </small>
+        {% endif %}
+    </div>
+    <button style="width: 100%" class="btn btn-primary" type="submit">Widthdraw Funds</button>
+    </div>
+</form>
 
 {% endblock body %}

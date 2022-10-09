@@ -1,8 +1,32 @@
 {% extends "base" %}
 {% block body %}
 
-<br>
+<h3>Create New Bounty</h3>
+<p>Market will collect a {{ admin_settings.fee_rate_basis_points / 100 }}% fee from each sale</p>
+<form action="/new_bounty" method="post">
+  <div class="flex-column" style="gap: 12px;">
+    <div>
+      <label for="title" class="input-label">Bounty Title</label>
+      <input type="text" class="input {% if flash %}field-{{flash.0}}{% endif %}" placeholder="enter an title for this bounty ..." name="title" id="user_bond_price_sat" autofocus>  
+    </div>
+    <div>
+      <label for="title" class="input-label">Bounty Details</label>
+      <textarea placeholder="enter the requirements to claim the bounty..." name="description" id="description" value="" class="input-textarea"></textarea>
+    </div>
+    <div>
+      <label for="title" class="input-label">Initial Reward</label>
+      <input type="number" class="input" placeholder="enter the starting reward in sats..." name="price_sat" id="price_sat" value="" />
+    </div>
+    {% if flash %}
+    <small class="field-{{flash.0}}-msg">
+      {{ flash.1 }}
+    </small>
+    {% endif %}
+    <button style="width: 100%" class="btn btn-primary" type="submit">Create Bounty</button>
+    </div>
+</form>
 
+{# 
 <div class="container">
   <p><!--Nothing to see here --></p>
 
@@ -30,7 +54,7 @@
     </form>
   </div>
 
-</div>
+</div> #}
 
 
 {% endblock body %}

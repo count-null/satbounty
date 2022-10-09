@@ -9,10 +9,10 @@ Username: {{ user.email }}.
 <a href="market_liabilities">Show market liabilities</a>
 
 <div class="container">
-  <p><!--Nothing to see here --></p>
-  <div class="row">
     <h5>Settings</h5>
     <a href="/update_market_name">Update Market Name</a>
+    <br>
+    <a href="/update_market_info">Update Market Info</a>
     <br>
     <a href="/update_pgp_info">Update PGP Info</a>
     <br>
@@ -21,29 +21,23 @@ Username: {{ user.email }}.
     <a href="/update_user_bond_price">Update User Bond Price</a>
     <br>
     <a href="/update_max_allowed_users">Update Max Allowed Users</a>
-  </div>
 </div>
 
 
 <div class="container">
-  <p><!--Nothing to see here --></p>
-  <div class="row">
     <h5>Bounties</h5>
     <a href="/view_pending_bounties">View Pending Bounties</a>
     <br>
     <a href="/deactivated_bounties">Deactivated Bounties</a>
-  </div>
 </div>
 
 <div class="container">
-  <p><!--Nothing to see here --></p>
-  <div class="row">
     <h5>Users</h5>
     <span>Number of users: {{ num_users }}</span>
     <a href="/active_users">Active Users</a>
     <br>
     <a href="/disabled_users">Disabled Users</a>
-  </div>
+    <a href="/logout">Logout</a>
 </div>
 
 <br>

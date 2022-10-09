@@ -37,7 +37,7 @@ CREATE TABLE cases (
     buyer_user_id INTEGER NOT NULL,
     seller_user_id INTEGER NOT NULL,
     quantity INTEGER NOT NULL,
-    listing_id INTEGER NOT NULL,
+    bounty_id INTEGER NOT NULL,
     case_details VARCHAR NOT NULL,
     amount_owed_sat UNSIGNED BIG INT NOT NULL,
     seller_credit_sat UNSIGNED BIG INT NOT NULL,
@@ -83,6 +83,7 @@ CREATE TABLE usersettings (
 CREATE TABLE adminsettings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     market_name VARCHAR NOT NULL,
+    market_info VARCHAR NOT NULL,
     fee_rate_basis_points INTEGER NOT NULL,
     user_bond_price_sat UNSIGNED BIG INT NOT NULL,
     pgp_key VARCHAR NOT NULL,
