@@ -10,4 +10,6 @@
 
 <p><b>PGP Key</b>: {% if admin_settings.pgp_key %}<pre>{{ admin_settings.pgp_key }}</pre>{% else %}Not set{% endif %}</p>
 
+{{ admin_settings.market_info|safe }}
+
 {% endblock body %}

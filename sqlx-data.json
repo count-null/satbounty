@@ -2542,30 +2542,30 @@
           "type_info": "Text"
         },
         {
-          "name": "fee_rate_basis_points",
+          "name": "market_info",
           "ordinal": 2,
-          "type_info": "Int64"
+          "type_info": "Text"
         },
         {
-          "name": "user_bond_price_sat",
+          "name": "fee_rate_basis_points",
           "ordinal": 3,
           "type_info": "Int64"
         },
         {
-          "name": "pgp_key",
+          "name": "user_bond_price_sat",
           "ordinal": 4,
+          "type_info": "Int64"
+        },
+        {
+          "name": "pgp_key",
+          "ordinal": 5,
           "type_info": "Text"
         },
         {
           "name": "max_allowed_users",
-          "ordinal": 5,
-          "type_info": "Int64"
-        },
-        {
-          "name": "market_info",
           "ordinal": 6,
-          "type_info": "Text"
-        }
+          "type_info": "Int64"
+        } 
       ],
       "nullable": [
         false,
