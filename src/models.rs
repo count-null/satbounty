@@ -184,6 +184,7 @@ pub struct CaseCard {
 #[serde(crate = "rocket::serde")]
 pub struct AccountInfo {
     pub account_balance_sat: i64,
+    pub account_balance_sat_text: String,
     pub num_unawarded_cases: u32,
 }
 
@@ -2651,9 +2652,11 @@ impl AccountInfo {
         user_id: i32,
     ) -> Result<AccountInfo, sqlx::Error> {
         let account_balance_sat = AccountInfo::total_account_balance_for_user(db, user_id).await?;
+        let account_balance_sat_text = util::short_num_format(account_balance_sat.try_into().unwrap());
         let num_unawarded_cases = Case::num_processing_for_user(db, user_id).await?;
         Ok(AccountInfo {
             account_balance_sat,
+            account_balance_sat_text,
             num_unawarded_cases,
         })
     }

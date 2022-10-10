@@ -22,7 +22,7 @@
         <a class="" href="/admin">Admin</a>
         {% else %}
         <a class="" href="/my_processing_cases">Cases{% if base_context.account_info %} ({{ base_context.account_info.num_unawarded_cases }}){% endif %}</a>
-        <a class="" href="/account">@{{ base_context.user.email }}{% if base_context.account_info %} ({{ base_context.account_info.account_balance_sat }} sats){% endif %}</a>
+        <a class="" href="/account">@{{ base_context.user.email }}{% if base_context.account_info %} ({{ base_context.account_info.account_balance_sat_text }} sats){% endif %}</a>
         {% endif %}
         {% endif %}
         {% if not base_context.user %}
