@@ -4,7 +4,7 @@
 <h3>Welcome to <span class="nav-brand">{{ admin_settings.market_name }}</span></h3>
 <div class="flex justify-space-around">
   <div class="flex-column">
-    <h3>100k</h3>
+    <h3>{{ num_users }}</h3>
     <p>active users</p>
   </div>
    <div class="flex-column"> 

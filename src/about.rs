@@ -3,6 +3,7 @@ use crate::config::Config;
 use crate::db::Db;
 use crate::lightning;
 use crate::models::AdminSettings;
+use crate::models::UserAccount;
 use rocket::fairing::AdHoc;
 use rocket::request::FlashMessage;
 use rocket::serde::Serialize;
@@ -19,6 +20,7 @@ struct Context {
     flash: Option<(String, String)>,
     admin_settings: AdminSettings,
     lightning_node_pubkey: String,
+    num_users: u64,
 }
 
 impl Context {
@@ -38,11 +40,15 @@ impl Context {
         let lightning_node_pubkey = get_lightning_node_pubkey(config)
             .await
             .unwrap_or_else(|_| "".to_string());
+        let num_users = UserAccount::number_of_users(&mut db)
+            .await
+            .map_err(|_| "failed to get number of users.")?;
         Ok(Context {
             base_context,
             flash,
             admin_settings,
             lightning_node_pubkey,
+            num_users,
         })
     }
 }
