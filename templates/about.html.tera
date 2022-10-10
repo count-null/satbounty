@@ -1,15 +1,27 @@
 {% extends "base" %}
 {% block body %}
 
-<h3>About</h3>
+<h3>Welcome to <span class="nav-brand">{{ admin_settings.market_name }}</span></h3>
+<div class="flex justify-space-around">
+  <div class="flex-column">
+    <h3>100k</h3>
+    <p>active users</p>
+  </div>
+   <div class="flex-column"> 
+    <h3>{{ admin_settings.fee_rate_basis_points / 100 }}%</h3>
+    <p>market fee</p> 
+  </div>
+  <div class="flex-column">
+    <h3>{{ admin_settings.user_bond_price_sat }} sats</h3>
+    <p>user bond</p>
+  </div>
+ </div>
 
-<p><b>Market Name</b>: {{ admin_settings.market_name }}</p>
-<p><b>Market Fee Rate</b>: {{ admin_settings.fee_rate_basis_points / 100 }}% of each sale</p>
-<p><b>User Bond Price</b>: {{ admin_settings.user_bond_price_sat }} sats</p>
-<p><b>Lightning Node</b>: <a href="https://amboss.space/node/{{ lightning_node_pubkey }}" rel="noreferrer noopener" target="_blank">{{ lightning_node_pubkey }}</a></p>
+<div class="markdown">
+  {{ admin_settings.market_info|safe }}
+</div>
 
 <p><b>PGP Key</b>: {% if admin_settings.pgp_key %}<pre>{{ admin_settings.pgp_key }}</pre>{% else %}Not set{% endif %}</p>
 
-{{ admin_settings.market_info|safe }}
-
+<p><b>Lightning Node</b>: <a href="https://amboss.space/node/{{ lightning_node_pubkey }}" rel="noreferrer noopener" target="_blank">{{ lightning_node_pubkey }}</a></p>
 {% endblock body %}

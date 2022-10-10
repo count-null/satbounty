@@ -25,6 +25,14 @@ a {
   align-items: center;;
 }
 
+.justify-space-between {
+  justify-content: space-between;
+}
+
+.justify-space-around {
+  justify-content: space-around;
+}
+
 .flex-column {
   display: flex;
   flex-direction: column;
@@ -43,6 +51,10 @@ a {
     width: 100%;
     margin: 0;
   }
+}
+
+.market-stats {
+  justify-con
 }
 
 .primary-nav {
@@ -169,4 +181,6 @@ a {
   width: 32px;
 }
 
-
+.markdown {
+  text-align: left;
+}

@@ -94,7 +94,7 @@
 	  <p><b>Fee Rate</b>: Market will collect a {{ bounty_display.bounty.fee_rate_basis_points / 100 }}% fee rate</p>
 	  {% endif %}
 
-	  <p><b>Description</b>: {{ bounty_display.bounty.description|safe }}</p>
+	  <div class="markdown">{{ bounty_display.bounty.description|safe }}</div>
     </div>
 	  {% if bounty_display.bounty.approved %}
 	  {% if not admin_user %}
