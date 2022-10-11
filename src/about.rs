@@ -2,6 +2,7 @@ use crate::base::BaseContext;
 use crate::config::Config;
 use crate::db::Db;
 use crate::lightning;
+use crate::util;
 use crate::models::AdminSettings;
 use crate::models::UserAccount;
 use rocket::fairing::AdHoc;
@@ -21,6 +22,7 @@ struct Context {
     admin_settings: AdminSettings,
     lightning_node_pubkey: String,
     num_users: u64,
+    num_users_text: String,
 }
 
 impl Context {
@@ -43,12 +45,15 @@ impl Context {
         let num_users = UserAccount::number_of_users(&mut db)
             .await
             .map_err(|_| "failed to get number of users.")?;
+        
+        let num_users_text = util::short_num_format(num_users);
         Ok(Context {
             base_context,
             flash,
             admin_settings,
             lightning_node_pubkey,
             num_users,
+            num_users_text,
         })
     }
 }

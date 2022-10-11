@@ -102,6 +102,7 @@ pub struct AdminSettings {
     pub market_info_raw: String,
     pub fee_rate_basis_points: u32,
     pub user_bond_price_sat: u64,
+    pub user_bond_price_sat_text: String,
     pub pgp_key: String,
     pub max_allowed_users: u64,
 }
@@ -258,6 +259,7 @@ impl Default for AdminSettings {
             market_info_raw: "About this market".to_string(),
             fee_rate_basis_points: 500,
             user_bond_price_sat: 1,
+            user_bond_price_sat_text: "1".to_string(),
             pgp_key: "".to_string(),
             max_allowed_users: 10000,
         }
@@ -1574,6 +1576,7 @@ impl AdminSettings {
                     market_info_raw: r.market_info,
                     fee_rate_basis_points: r.fee_rate_basis_points.try_into().unwrap(),
                     user_bond_price_sat: r.user_bond_price_sat.try_into().unwrap(),
+                    user_bond_price_sat_text: util::short_num_format(r.user_bond_price_sat.try_into().unwrap()),
                     pgp_key: r.pgp_key,
                     max_allowed_users: r.max_allowed_users.try_into().unwrap(),
                 })

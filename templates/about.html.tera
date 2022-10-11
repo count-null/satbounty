@@ -4,7 +4,7 @@
 <h3>Welcome to <span class="nav-brand">{{ admin_settings.market_name }}</span></h3>
 <div class="flex justify-space-around">
   <div class="flex-column">
-    <h3>{{ num_users }}</h3>
+    <h3>{{ num_users_text }}</h3>
     <p>active users</p>
   </div>
    <div class="flex-column"> 
@@ -12,7 +12,7 @@
     <p>market fee</p> 
   </div>
   <div class="flex-column">
-    <h3>{{ admin_settings.user_bond_price_sat }} sats</h3>
+    <h3>{{ admin_settings.user_bond_price_sat_text }} sats</h3>
     <p>user bond</p>
   </div>
  </div>
