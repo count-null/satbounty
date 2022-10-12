@@ -96,6 +96,14 @@ Go to http://localhost:8000/ and use the username/password in **config.toml** to
 cargo test
 ```
 
+## Front-end
+
+Satbounty uses SASS/SCSS only. No JavaScript. 
+
+Sass is compiled on `cargo run` using [grass](https://docs.rs/grass/latest/grass/)
+
+For development, run `sass --watch static/scss/style.scss static/css/style.css`
+
 ## Database Migrations
 
 Use [sqlx-cli](https://crates.io/crates/sqlx-cli/).
