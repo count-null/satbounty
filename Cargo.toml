@@ -20,6 +20,7 @@ pgp = "0.8.0"
 tonic_openssl_lnd = "0.1.5"
 rexiv2 = "0.9.1"
 markdown = "0.3.0"
+grass = "0.11.2"
 
 [dependencies.sqlx]
 version = "0.6.0"

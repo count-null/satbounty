@@ -58,9 +58,18 @@ mod user_profile;
 mod util;
 mod withdraw;
 mod withdrawal;
+use std::fs::{File, read_to_string};
+use std::io::prelude::*;
+use grass;
 
 #[launch]
 fn rocket() -> _ {
+    println!("static/scss/style.scss is being processed into static/css/style.css");
+    let sass = read_to_string("static/scss/style.scss").expect("Error reading sass file");
+    let css = grass::from_string(sass, &grass::Options::default());
+    let mut file = File::create("static/css/style.css").expect("Error encountered while creating file!");
+    file.write_all(&css.unwrap().into_bytes()).expect("Error while writing to file");
+
     let config_figment = config::Config::get_config();
     let config: config::Config = config_figment.extract().unwrap();
     println!("Starting with config: {:?}", config);
