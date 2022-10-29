@@ -24,30 +24,33 @@
   {% if user_account.disabled %}
   Please contact the admin to find out how to get your account re-enabled.
   {% elif user_account.paid %}
-  <p><b>Payment time</b>: {{ (user_account.payment_time_ms / 1000) | int | date(format="%Y-%m-%d %H:%M") }}</p>
+  <p><b>Created At</b>: {{ (user_account.created_time_ms / 1000) | int | date(format="%Y-%m-%d %H:%M") }}</p>
   {% if user.id == user_account.user_id %}
-  <p><a href="/">Continue as activated user</a></p>
-  <p><a href="/deactivate_account">Deactivate account</a></p>
+  <a class="btn" href="/">Continue as activated user</a>
+  <br>
+  <br>
+  <a href="/deactivate_account">Deactivate account</a>
   {% endif %}
   {% else %}
   <p>A user bond is required to activate your account.</p>
   <p>You can withdraw the bond at any time by deactivating your account. The admin may punish bad behavior by taking your bond.</p>
- {% endif %}
+ 
+  <p><b>Lightning Request</b></p>
+  <img src="data:image/bmp;base64,{{ qr_svg_base64 }}" class="invoice--qr" />
+<div class="invoice--code">
+{{ user_account.invoice_payment_request }}
+</div>
 
+<a class="btn" href="/account_activation/{{ user_account.public_id }}">Check for Payment</a>
+<br/>
+<br/>
+<p><b>Open a channel to the market</b>: <a href="https://amboss.space/node/{{ lightning_node_pubkey }}" rel="noreferrer noopener" target="_blank">{{ lightning_node_pubkey }}</a></p>
 
-  {% if user_account.paid %}
-  <p><b>Account creation time</b>: {{ (user_account.created_time_ms / 1000) | int | date(format="%Y-%m-%d %H:%M") }}</p>
+ 
+ 
   {% endif %}
 
 
-<p><b>Lightning Request</b></p>
-    <img src="data:image/bmp;base64,{{ qr_svg_base64 }}" style="width:256px;height:256px;" />
-  <div class="invoice-code">
-  {{ user_account.invoice_payment_request }}
-  </div>
 
- <a class="btn" href="/account_activation/{{ user_account.public_id }}">Check for Payment</a>
- <br/>
- <br/>
- <p><b>Open a channel to the market</b>: <a href="https://amboss.space/node/{{ lightning_node_pubkey }}" rel="noreferrer noopener" target="_blank">{{ lightning_node_pubkey }}</a></p>
+
 {% endblock body %}

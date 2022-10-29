@@ -13,17 +13,17 @@
     <p><b>PGP Key</b>: {% if admin_settings.pgp_key %}<pre>{{ admin_settings.pgp_key }}</pre>{% else %}Not set{% endif %}</p>
 
     <form action="/update_pgp_info/change" method="post">
-      <div class="flex-column" style="gap: 12px;">
+      <div class="flex-column gap-1">
         <div>
-          <label for="pgp_key" class="input-label">PGP Key</label>
-          <textarea placeholder="enter yout PGP key..." name="pgp_key" id="pgp_key" value="" class="input-textarea"></textarea>
+          <label for="pgp_key" class="input--label">PGP Key</label>
+          <textarea class="input--textarea" placeholder="enter yout PGP key..." name="pgp_key" id="pgp_key" value=""></textarea>
         </div>
         {% if flash %}
         <small class="field-{{flash.0}}-msg">
           {{ flash.1 }}
         </small>
         {% endif %}
-        <button style="width: 100%" class="btn btn-primary" type="submit">Update PGP Key</button>
+        <button class="btn btn-primary w-100" type="submit">Update PGP Key</button>
       </div>
     </form>
   </div>

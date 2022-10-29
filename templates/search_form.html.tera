@@ -1,7 +1,7 @@
 <form action="/search" method="get">
 <div class="wrap">
   <div class="search">
-     <input type="text" class="input input-btn-right {% if flash %}field-{{flash.0}}{% endif %}" placeholder="Search..." name="search_text" id="search_text" value="">
+     <input type="text" class="input input--btn-right {% if flash %}field-{{flash.0}}{% endif %}" placeholder="Search..." name="search_text" id="search_text" value="">
      <button type="submit" class="searchButton">
        <img src="/images/search.svg" />
     </button>

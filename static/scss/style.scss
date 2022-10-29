@@ -1,199 +1,273 @@
 @font-face {
-    font-family: 'lightning';
-    src: url('fonts/lightning.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-  }
-  
-  html, body {
-    height: 100%;
-    background-color: #000;
-    color: rgba(255, 255, 255, 0.9);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  }
-  
-  a {
-    color: rgba(46, 153, 209);
-    text-decoration: none;
-  }
-  
-  .flex {
-    display: flex;
-  }
-  
-  .align-items-center {
-    align-items: center;;
-  }
-  
-  .justify-space-between {
-    justify-content: space-between;
-  }
-  
-  .justify-space-around {
-    justify-content: space-around;
-  }
-  
-  .flex-column {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .flex-container {
-    display: flex;
-    flex-direction: column;
-   width: 70%;
-    margin: 0 15%;
-    min-height: calc(100% - 64px);
-  }
-  
-  @media (max-width: 768px) {
-    .flex-container {
-      width: 100%;
-      margin: 0;
-    }
-  }
-  
-  .market-stats {
-    justify-content: space-around;
-  }
-  
-  .primary-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .nav-brand {
-    font-size: 32px;
-    font-family: 'lightning';
-  }
-  
-  .nav-items {
-    display: flex;
-    gap: 2em;  
-    align-items: center;
-  }
-  
-  .btn {
-    padding: 12px;
-    border-radius: 5px;
-    background-color: yellow;
-    color: #000;
-  }
-  
-  .btn-danger {
-    background-color: RED
-  }
-  
-  .search {
-    width: 100%;
-    position: relative;
-    display: flex;
-  }
-  
-  .input {
-    font-size: 14px;
-    width: 100%;
-    border: 3px solid #00B4CC;
-    padding: 5px;
-    height: 36px;
-    border-radius: 5px;
-    outline: none;
-    color: #9DBFAF;
-    background-color: #000;
-  }
-  .input:focus{
-    color: #00B4CC;
-  }
-  
-  .input-textarea {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    font-size: 14px;
-    min-width: 100%;
-    max-width: 100%;
-    height: 40vh;
-    border: 3px solid #00B4CC;
-    padding: 5px;
-    border-radius: 5px;
-    color: #9DBFAF;
-    background-color: #000;
-  }
-  .input-textarea:focus{
-    color: #00B4CC;
-  }
-  
-  .input-btn-right {
-    border-radius: 5px 0 0 5px;
-    border-right: none;
-  }
-  
-  .input-label {
-    font-weight: bold;
-    float: left; 
-    margin: 0.5em 0 0.5em 0;
-  }
-  
-  .searchButton {
-    width: 40px;
-    height: 36px;
-    border: 1px solid #00B4CC;
-    background: #00B4CC;
-    text-align: center;
-    color: #fff;
-    border-radius: 0 5px 5px 0;
-    cursor: pointer;
-    font-size: 20px;
-  }
-  
-  .wrap{
-    width: 100%;
-  }
-  
-  #footer {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: auto;
-    height:32px;
-    width:100%;
-    text-align: center;
-  }
-  
-  .card {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    margin: 4em auto;
-    color: #fff;
-    background: #000;
-    border: #fff solid 2px;
-  }
-  
-  .item {
-    display: flex;
-    align-items: center;
-  }
-  
-  .item-title {
-    margin: 0px;
-    text-align: left;
-    color: #fff;  
-  }
-  
-  .item-lightning {
-    margin: 12px;
-    width: 32px;
-  }
-  
-  .markdown {
-    text-align: left;
-  }
-  
-  .invoice-code {
-    font-family: monospace;
-    margin: 2em 25% 3em 25%;
-    padding: 1em;
-    background-color: #4e4e4e;
-    overflow-x: auto;
-  }
-  
+	font-family: "lightning";
+	src: url("fonts/lightning.ttf") format("truetype");
+	font-weight: normal;
+	font-style: normal;
+}
+
+$base-color: #282a36;
+$text-color: #bcc2d7;
+$link-color: #49a4e4;
+$grey-color: #353746;
+$sexy-color: #fada5e;
+$warn-color: #dc3545;
+
+html,
+body {
+	height: 100vh;
+	background-color: $base-color;
+	color: $text-color;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+		Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+a {
+	color: $link-color;
+	text-decoration: none;
+}
+
+.margin-1 {
+	margin: 1em;
+}
+
+.padding-1 {
+	padding: 1em;
+}
+
+.gap-1 {
+	gap: 12px;
+}
+
+.w-100 {
+	width: 100%;
+}
+
+.text-align-center {
+	text-align: center;
+}
+
+.text-align-left {
+	text-align: left;
+}
+
+.flex {
+	display: flex;
+}
+
+.align-items-center {
+	align-items: center;
+}
+
+.justify-space-between {
+	justify-content: space-between;
+}
+
+.justify-space-around {
+	justify-content: space-around;
+}
+
+.flex-column {
+	display: flex;
+	flex-direction: column;
+}
+
+.flex-container {
+	display: flex;
+	flex-direction: column;
+	width: 70%;
+	margin: 0 15%;
+	min-height: calc(100vh - 84px);
+}
+
+@media (max-width: 768px) {
+	.flex-container {
+		width: calc(100% - 4em);
+		margin: 0 2em;
+	}
+}
+
+.market-stats {
+	justify-content: space-around;
+}
+
+.nav {
+	&--primary {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	&--brand {
+		font-size: 32px;
+		font-family: "lightning";
+	}
+	&--balance {
+		color: #fff;
+		margin-left: 8px;
+	}
+	&--items {
+		display: flex;
+		gap: 2em;
+		align-items: center;
+	}
+}
+
+.btn {
+	padding: 12px;
+	border-radius: 5px;
+	border-color: $sexy-color;
+	font-weight: 700;
+	font-size: 14pt;
+	background-color: $sexy-color;
+	color: $base-color;
+	&:hover {
+		cursor: pointer;
+		background-color: darken($sexy-color, 10%);
+		border-color: darken($sexy-color, 10%);
+	}
+	&--danger {
+		background-color: $warn-color;
+		border-color: $warn-color;
+		&:hover {
+			cursor: pointer;
+			background-color: darken($warn-color, 10%);
+			border-color: darken($warn-color, 10%);
+		}
+	}
+	&--link {
+		padding: 0px;
+		background-color: transparent;
+		border-color: transparent;
+		color: $link-color;
+		font-weight: 400;
+		font-size: 12pt;
+		&:hover {
+			background-color: transparent;
+			border-color: transparent;
+		}
+	}
+}
+
+.search {
+	width: 100%;
+	position: relative;
+	display: flex;
+}
+
+.input {
+	font-size: 14px;
+	width: 100%;
+	border: 3px solid $link-color;
+	padding: 5px;
+	height: 36px;
+	border-radius: 5px;
+	outline: none;
+	color: lighten($link-color, 30%);
+	background-color: $base-color;
+	&:focus {
+		color: $link-color;
+	}
+	&--textarea {
+		font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+			Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+		font-size: 14px;
+		min-width: 100%;
+		max-width: 100%;
+		height: 40vh;
+		border: 3px solid $link-color;
+		padding: 5px;
+		border-radius: 5px;
+		color: lighten($link-color, 30%);
+		background-color: $base-color;
+		&:focus {
+			outline: none;
+			color: $link-color;
+		}
+	}
+	&--label {
+		font-weight: bold;
+		float: left;
+		margin: 0.5em 0 0.5em 0;
+	}
+	&--btn-right {
+		border-radius: 5px 0 0 5px;
+		border-right: none;
+	}
+}
+
+.searchButton {
+	width: 40px;
+	height: 36px;
+	border: 1px solid $link-color;
+	background: $link-color;
+	text-align: center;
+	color: $text-color;
+	border-radius: 0 5px 5px 0;
+	cursor: pointer;
+	font-size: 20px;
+}
+
+.wrap {
+	width: 100%;
+}
+
+#footer {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: auto;
+	height: 32px;
+	width: 100%;
+	text-align: center;
+}
+
+.card {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	margin: 4em auto;
+	color: $text-color;
+	background: $base-color;
+	border: $text-color solid 2px;
+	&--header {
+		text-align: left;
+		background-color: $grey-color;
+		&--content {
+			h1 {
+				font-size: 3em;
+				margin-top: 0px;
+			}
+		}
+	}
+}
+
+.item {
+	display: flex;
+	align-items: center;
+	&--title {
+		margin: 0px;
+		text-align: left;
+		color: $text-color;
+	}
+	&--lightning {
+		margin: 12px;
+		width: 32px;
+	}
+	&--desc {
+		gap: 8px;
+		height: 14px;
+	}
+}
+
+.invoice {
+	&--qr {
+		width: 256px;
+		height: 256px;
+	}
+	&--code {
+		font-family: monospace;
+		margin: 2em 25% 3em 25%;
+		padding: 1em;
+		background-color: $grey-color;
+		overflow-x: auto;
+	}
+}

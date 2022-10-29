@@ -4,7 +4,7 @@
 <h3>Update User Bond Price</h3>
 <p>Bond Price: {{ admin_settings.user_bond_price_sat }} sats</p>
 <form action="/update_user_bond_price/change" method="post">
-  <div class="flex-column" style="gap: 12px;">
+  <div class="flex-column gap-1">
     <div>
       <input type="text" class="input {% if flash %}field-{{flash.0}}{% endif %}" placeholder="enter a new bond price in sats..." name="user_bond_price_sat" id="user_bond_price_sat" autofocus>
       {% if flash %}
@@ -13,7 +13,7 @@
         </small>
         {% endif %}
     </div>
-    <button style="width: 100%" class="btn btn-primary" type="submit">Change User Bond Price</button>
+    <button class="btn btn-primary w-100" type="submit">Change User Bond Price</button>
     </div>
 </form>
 

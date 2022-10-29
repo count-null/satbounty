@@ -11,18 +11,18 @@
 
 <body>
   <div class="flex-container">
-    <nav class="primary-nav">
-      <a class="nav-brand" href="/">{{ base_context.admin_settings.market_name }}</a>
-      <div class="nav-items">
+    <nav class="nav--primary">
+      <a class="nav--brand" href="/">{{ base_context.admin_settings.market_name }}</a>
+      <div class="nav--items">
         <a class="" href="/about">About</a>
-        <a class="" href="/top_sellers">Top Sellers</a>
+        <a class="" href="/top_sellers">Top</a>
+        <a class="" href="/top_sellers">Recent</a>
         {% if base_context.user %}
         {% if base_context.admin_user %}
         <a class="" href="/view_pending_bounties">Pending Bounties{% if base_context.admin_info %} ({{ base_context.admin_info.num_pending_bounties }}){% endif %}</a>
         <a class="" href="/admin">Admin</a>
         {% else %}
-        <a class="" href="/my_processing_cases">Cases{% if base_context.account_info %} ({{ base_context.account_info.num_unawarded_cases }}){% endif %}</a>
-        <a class="" href="/account">@{{ base_context.user.email }}{% if base_context.account_info %} ({{ base_context.account_info.account_balance_sat_text }} sats){% endif %}</a>
+        <a class="" href="/account">@{{ base_context.user.email }}{% if base_context.account_info %}<span class="nav--balance">{{ base_context.account_info.account_balance_sat_text }}</span>{% endif %}</a>
         {% endif %}
         {% endif %}
         {% if not base_context.user %}
@@ -31,8 +31,8 @@
         {% endif %}
       </div>
     </nav>
-    <div style="text-align: center;">
-      <br>
+    <br>
+    <div class="text-align-center">
       {% block body %}
       {% endblock body %}
     </div>

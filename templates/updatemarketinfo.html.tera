@@ -3,12 +3,12 @@
 
 <h3>Update Market Info</h3>
 <form action="/update_market_info/change" method="post">
-  <div class="flex-column" style="gap: 12px;">
+  <div class="flex-column gap-1">
     <div>
-      <label for="market_info" class="input-label">Market Info</label>
-      <textarea placeholder="enter a description about this market..." name="market_info" id="market_info" class="input-textarea">{{ admin_settings.market_info_raw }}</textarea>
+      <label for="market_info" class="input--label">Market Info</label>
+      <textarea class="input--textarea" placeholder="enter a description about this market..." name="market_info" id="market_info">{{ admin_settings.market_info_raw }}</textarea>
     </div>
-    <button style="width: 100%" class="btn btn-primary" type="submit">Update Market Info</button>
+    <button class="btn btn-primary w-100" type="submit">Update Market Info</button>
     </div>
 </form>
 

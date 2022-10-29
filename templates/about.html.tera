@@ -17,7 +17,7 @@
   </div>
  </div>
 
-<div class="markdown">
+<div class="text-align-left">
   {{ admin_settings.market_info|safe }}
 </div>
 

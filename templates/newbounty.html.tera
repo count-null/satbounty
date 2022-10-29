@@ -2,19 +2,19 @@
 {% block body %}
 
 <h3>Create New Bounty</h3>
-<p>Market will collect a {{ admin_settings.fee_rate_basis_points / 100 }}% fee from each sale</p>
+<p>Market will collect a {{ admin_settings.fee_rate_basis_points / 100 }}% fee</p>
 <form action="/new_bounty" method="post">
-  <div class="flex-column" style="gap: 12px;">
+  <div class="flex-column gap-1">
     <div>
-      <label for="title" class="input-label">Bounty Title</label>
+      <label for="title" class="input--label">Bounty Title</label>
       <input type="text" class="input {% if flash %}field-{{flash.0}}{% endif %}" placeholder="enter an title for this bounty ..." name="title" id="user_bond_price_sat" autofocus>  
     </div>
     <div>
-      <label for="title" class="input-label">Bounty Details</label>
-      <textarea placeholder="enter the requirements to claim the bounty..." name="description" id="description" value="" class="input-textarea"></textarea>
+      <label for="title" class="input--label">Bounty Details</label>
+      <textarea class="input--textarea" placeholder="enter the requirements to claim the bounty..." name="description" id="description" value=""></textarea>
     </div>
     <div>
-      <label for="title" class="input-label">Initial Reward</label>
+      <label for="title" class="input--label">Initial Reward</label>
       <input type="number" class="input" placeholder="enter the starting reward in sats..." name="price_sat" id="price_sat" value="" />
     </div>
     {% if flash %}
@@ -22,39 +22,8 @@
       {{ flash.1 }}
     </small>
     {% endif %}
-    <button style="width: 100%" class="btn btn-primary" type="submit">Create Bounty</button>
+    <button class="btn btn-primary w-100" type="submit">Create Bounty</button>
     </div>
 </form>
-
-{# 
-<div class="container">
-  <p><!--Nothing to see here --></p>
-
-  <div class="row">
-    <h4>Create New Bounty</h4>
-    <p>Market will collect a {{ admin_settings.fee_rate_basis_points / 100 }}% fee from each sale</p>
-    <form action="/new_bounty" method="post">
-      <label for="title">Enter the item name</label>
-      <input type="text" placeholder="item name..."
-             name="title" id="title" value="" autofocus
-             class="{% if flash %}field-{{flash.0}}{% endif %}" />
-      <label for="title">Enter the description of the item</label>
-      <textarea placeholder="item description..."
-		name="description" id="description" value="" class="u-full-width"></textarea>
-      <label for="title">Enter the price of each item in sats</label>
-      <input type="number" placeholder="item price in sats..."
-	     name="price_sat" id="price_sat" value="" />
-      {% if flash %}
-      <small class="field-{{flash.0}}-msg">
-	{{ flash.1 }}
-      </small>
-      {% endif %}
-      <label for="submit"></label>
-      <input type="submit" value="create bounty">
-    </form>
-  </div>
-
-</div> #}
-
 
 {% endblock body %}

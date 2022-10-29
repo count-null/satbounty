@@ -2,13 +2,13 @@
 <div class="flex-column">
   {% for card in bounty_cards %}
  <div class="item">
-  <img class="item-lightning" src="/images/lightning.svg"/>
+  <img class="item--lightning" src="/images/lightning.svg"/>
   <div>
 
 	<a href="/bounty/{{ card.bounty.public_id }}">
-	  <h4 class="item-title">{{ card.bounty.title }}</h4>
+	  <h4 class="item--title">{{ card.bounty.title }}</h4>
 	</a>
-<div class="flex align-items-center" style="gap: 8px; height: 14px;">
+<div class="flex align-items-center item--desc">
   <p>{{ card.bounty.price_sat }} sats</p>
   <p>\</p>
   <p># cases</p>

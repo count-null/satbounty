@@ -4,7 +4,7 @@
 <h3>Update Max Allowed Users</h3>
 <p>Max Users: {{ admin_settings.max_allowed_users }}</p>
 <form action="/update_max_allowed_users/change" method="post">
-  <div class="flex-column" style="gap: 12px;">
+  <div class="flex-column gap-1">
     <div>
       <input type="text" class="input {% if flash %}field-{{flash.0}}{% endif %}" placeholder="enter a new number of max users..." name="max_allowed_users" id="max_allowed_users" autofocus>
       {% if flash %}
@@ -13,7 +13,7 @@
         </small>
         {% endif %}
     </div>
-    <button style="width: 100%" class="btn btn-primary" type="submit">Change Max Allowed Users</button>
+    <button class="btn btn-primary w-100" type="submit">Change Max Allowed Users</button>
     </div>
 </form>
 

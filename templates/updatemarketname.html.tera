@@ -4,7 +4,7 @@
 <h3>Update Market Name</h3>
 <p>Market Name: {{ admin_settings.market_name }}</p>
 <form action="/update_market_name/change" method="post">
-  <div class="flex-column" style="gap: 12px;">
+  <div class="flex-column gap-1">
     <div>
       <input type="text" class="input {% if flash %}field-{{flash.0}}{% endif %}" name="market_name" id="market_name" autofocus>
       {% if flash %}
@@ -13,7 +13,7 @@
         </small>
         {% endif %}
     </div>
-    <button style="width: 100%" class="btn btn-primary" type="submit">Change Market Name</button>
+    <button class="btn btn-primary w-100" type="submit">Change Market Name</button>
     </div>
 </form>
 

@@ -4,7 +4,7 @@
 <h3>Update Fee Rate</h3>
 <p>Fee Rate: {{ admin_settings.fee_rate_basis_points / 100 }}%</p>
 <form action="/update_fee_rate/change" method="post">
-  <div class="flex-column" style="gap: 12px;">
+  <div class="flex-column gap-1">
     <div>
       <input type="text" class="input {% if flash %}field-{{flash.0}}{% endif %}" placeholder="enter a new fee rate in basis points..." name="fee_rate_basis_points" id="fee_rate_basis_points" autofocus>
       {% if flash %}
@@ -13,7 +13,7 @@
         </small>
         {% endif %}
     </div>
-    <button style="width: 100%" class="btn btn-primary" type="submit">Change Fee Rate</button>
+    <button class="btn btn-primary w-100" type="submit">Change Fee Rate</button>
     </div>
 </form>
 

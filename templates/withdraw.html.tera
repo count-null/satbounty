@@ -5,7 +5,7 @@
 <p><b>Account Balance</b>: {{ account_balance_sat }} sats</p>
 <p><a href="/my_account_balance">View Account Balance</a></p>
 <form action="/withdraw/new" method="post">
-  <div class="flex-column" style="gap: 12px;">
+  <div class="flex-column gap-1">
     <div>
       <input type="text" class="input {% if flash %}field-{{flash.0}}{% endif %}" placeholder="enter a lightning invoice payment request..." name="invoice_payment_request" id="invoice_payment_request" autofocus>
       {% if flash %}
@@ -14,7 +14,7 @@
         </small>
         {% endif %}
     </div>
-    <button style="width: 100%" class="btn btn-primary" type="submit">Widthdraw Funds</button>
+    <button class="btn btn-primary w-100" type="submit">Widthdraw Funds</button>
     </div>
 </form>
 

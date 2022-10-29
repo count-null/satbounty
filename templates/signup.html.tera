@@ -4,16 +4,16 @@
 <h3>Sign Up</h3>
 <p>Have an account? <a href="/login">Log in</a> instead!</p>
 <form action="/signup" method="post">
-  <div class="flex-column" style="gap: 12px;">
+  <div class="flex-column gap-1">
     <div>
-      <label for="email" class="input-label">Username</label>
+      <label for="email" class="input--label">Username</label>
       <input type="text" class="input" name="email" required>
     </div>
     <div>
-      <label for="password" class="input-label">Password</label>
+      <label for="password" class="input--label">Password</label>
       <input type="password" class="input" name="password" required>
     </div>
-    <button style="width: 100%" class="btn btn-primary" type="submit">Sign Up</button>
+    <button class="btn btn-primary w-100" type="submit">Sign Up</button>
     </div>
 </form>
 
